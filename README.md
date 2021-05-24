@@ -3,7 +3,7 @@ Purdue University ECE 47700 senior design project
 
 ## Intro
 
-oTTo is a two-wheel self-balancing robot designed as an experimental hardware platform for control theory students to gain hands-on on real-world control problem. In addition to the microcontroller part, a MATLAB/Simulink interface will be also provided to facilitate the implementation of various controllers with Simulink.
+oTTo is a two-wheel self-balancing robot designed as an experimental hardware platform for control theory students to gain hands-on experience on real-world control problems. In addition to the microcontroller part, a MATLAB/Simulink interface will be also provided to facilitate the implementation of various controllers with Simulink.
 
 ### Main Components
 
