@@ -1,4 +1,5 @@
 # oTTo
+
 Purdue University ECE 47700 senior design project
 
 ## Intro
@@ -11,10 +12,12 @@ oTTo is a two-wheel self-balancing robot designed as an experimental hardware pl
 2. [Adafruit BNO085 9-DOF IMU](https://www.adafruit.com/product/4754)
 3. [ESP8266 microcontroller](https://www.espressif.com/en/products/socs/esp8266)
 
-### Concept Sketch:
+### Concept Sketch
+
 ![Concept sketch](https://user-images.githubusercontent.com/19645713/119400346-0e936380-bca8-11eb-92e4-784602a6f2d4.png)
 
-### Functional Diagrams:
+### Functional Diagrams
+
 ![Hardware platform functional diagram](https://user-images.githubusercontent.com/19645713/119400410-24a12400-bca8-11eb-8841-9a9575c44fbc.png)
 ![Simulink interface functional diagram](https://user-images.githubusercontent.com/19645713/119400416-266ae780-bca8-11eb-8e7e-a8d4a10a9e9a.png)
 
