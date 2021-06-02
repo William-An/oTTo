@@ -52,6 +52,10 @@ oTTo is a two-wheel self-balancing robot designed as an experimental hardware pl
 ### Debugging
 
 1. [ESP32 IDF JTAG Debug Setup](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/jtag-debugging/index.html#how-it-works)
+2. [Openocd](http://openocd.org/)
+3. [Openocd 8266 Port](https://github.com/sysprogs/esp8266-openocd)
+   1. Not an official release from neither Espressif nor Openocd
+   2. Though the Espressif mentions that they might support esp8266 with openocd in the future but it is not their first priority: [GitHub Issue](https://github.com/espressif/openocd-esp32/issues/111)
 
 ### Miscellaneous
 
