@@ -43,10 +43,15 @@ oTTo is a two-wheel self-balancing robot designed as an experimental hardware pl
 ### SDKs & Libraries
 
 1. [ESP8266 RTOS SDK](https://docs.espressif.com/projects/esp8266-rtos-sdk/en/latest/get-started/index.html)
-2. [BNO080/BNO085 driver](https://github.com/hcrest/bno080-driver)
-3. [Custom Simulink library](https://ww2.mathworks.cn/help/simulink/ug/creating-block-libraries.html?lang=en)
-4. [Custom Simulink block](https://www.mathworks.com/help//simulink/ug/tutorial-creating-a-custom-block.html?requestedDomain=)
-5. [MATLAB UDP functions](https://www.mathworks.com/help/instrument/udp-interface.html?s_tid=CRUX_lftnav)
+2. [ESP32 IDF SDK](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/index.html), since the RTOS SDK is very close to it
+3. [BNO080/BNO085 driver](https://github.com/hcrest/bno080-driver)
+4. [Custom Simulink library](https://ww2.mathworks.cn/help/simulink/ug/creating-block-libraries.html?lang=en)
+5. [Custom Simulink block](https://www.mathworks.com/help//simulink/ug/tutorial-creating-a-custom-block.html?requestedDomain=)
+6. [MATLAB UDP functions](https://www.mathworks.com/help/instrument/udp-interface.html?s_tid=CRUX_lftnav)
+
+### Debugging
+
+1. [ESP32 IDF JTAG Debug Setup](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/jtag-debugging/index.html#how-it-works)
 
 ### Miscellaneous
 

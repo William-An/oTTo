@@ -50,3 +50,14 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+# vscode workspace
+.vscode/
+*.code-workspace
+
+# OS related file
+.DS_Store
+.DS_store
+
+# ESP8266 RTOS SDK
+build/
