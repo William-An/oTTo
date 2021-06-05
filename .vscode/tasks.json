@@ -1,0 +1,39 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+          "label": "openocd",
+          "type": "shell",
+          "isBackground": true,
+          "options": {
+            "cwd": "${workspaceFolder}",
+            "env": {
+              "PATH": "${idf.customExtraPaths}:${env:PATH}"
+            }
+          },
+          // "command": "openocd ${input:openocdArgs}",
+          "command": "openocd -f ${config:idf.openOcdConfigs}",
+        },
+        {
+          "label": "killopenocd",
+          "type": "shell",
+          "isBackground": true,
+          "linux": {
+            "command": "killall openocd"
+          },
+          "osx": {
+            "command": "killall openocd"
+          }
+        }
+    ],
+    "inputs": [
+      {
+        "id": "openocdArgs",
+        "description": "arguments for openocd",
+        "type": "promptString",
+        "default": "-f ${workspaceFolder}/myesp32.cfg"
+      }
+    ]
+}

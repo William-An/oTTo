@@ -39,6 +39,8 @@ oTTo is a two-wheel self-balancing robot designed as an experimental hardware pl
 1. [ESP8266 chip datasheet](https://espressif.com/sites/default/files/documentation/0a-esp8266ex_datasheet_en.pdf)
 2. [ESP8266 chip technical reference](https://www.espressif.com/sites/default/files/documentation/esp8266-technical_reference_en.pdf)
 3. [A4988 stepper motor driver chip datasheet](https://www.pololu.com/file/0J450/A4988.pdf)
+4. Current-based motors? brush-less motors?
+5. can-bus control?
 
 ### SDKs & Libraries
 

@@ -52,12 +52,15 @@ Mkfile.old
 dkms.conf
 
 # vscode workspace
-.vscode/
 *.code-workspace
 
 # OS related file
 .DS_Store
 .DS_store
 
-# ESP8266 RTOS SDK
+# ESP32 IDF
 build/
+
+# Logging
+*.log
+log*.txt
