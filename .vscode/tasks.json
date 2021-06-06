@@ -4,36 +4,40 @@
     "version": "2.0.0",
     "tasks": [
         {
-          "label": "openocd",
-          "type": "shell",
-          "isBackground": true,
-          "options": {
-            "cwd": "${workspaceFolder}",
-            "env": {
-              "PATH": "${idf.customExtraPaths}:${env:PATH}"
+            "label": "openocd",
+            "type": "shell",
+            "presentation": {
+                "echo": true,
+                "reveal": "never",
+                "focus": false,
+                "panel": "new"
+            },
+            "command": "openocd -s ${command:espIdf.getOpenOcdScriptValue} ${command:espIdf.getOpenOcdConfigs}",
+            "windows": {
+                "command": "openocd.exe -s ${command:espIdf.getOpenOcdScriptValue} ${command:espIdf.getOpenOcdConfigs}",
+                "options": {
+                    "env": {
+                        "PATH": "${env:PATH};${config:idf.customExtraPaths}"
+                    }
+                }
+            },
+            "options": {
+                "env": {
+                    "PATH": "${env:PATH}:${config:idf.customExtraPaths}"
+                }
+            },
+            "problemMatcher": {
+                "owner": "cpp",
+                "fileLocation": "absolute",
+                "pattern": {
+                    "regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
+                    "file": 1,
+                    "line": 2,
+                    "column": 3,
+                    "severity": 4,
+                    "message": 5
+                }
             }
-          },
-          // "command": "openocd ${input:openocdArgs}",
-          "command": "openocd -f ${config:idf.openOcdConfigs}",
         },
-        {
-          "label": "killopenocd",
-          "type": "shell",
-          "isBackground": true,
-          "linux": {
-            "command": "killall openocd"
-          },
-          "osx": {
-            "command": "killall openocd"
-          }
-        }
     ],
-    "inputs": [
-      {
-        "id": "openocdArgs",
-        "description": "arguments for openocd",
-        "type": "promptString",
-        "default": "-f ${workspaceFolder}/myesp32.cfg"
-      }
-    ]
 }
