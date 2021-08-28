@@ -8,9 +8,11 @@ oTTo is a two-wheel self-balancing robot designed as an experimental hardware pl
 
 ### Main Components
 
-1. [A4988 stepper motor driver](https://www.pololu.com/product/1182)
-2. [Adafruit BNO085 9-DOF IMU](https://www.adafruit.com/product/4754)
-3. [ESP8266 microcontroller](https://www.espressif.com/en/products/socs/esp8266)
+1. [A4988 stepper motor driver](https://www.amazon.com/gp/product/B01FFGAKK8/ref=ppx_yo_dt_b_search_asin_title?ie=UTF8&psc=1#descriptionAndDetails)
+2. [Adafruit TDK InvenSense ICM-20948 9-DoF IMU](https://www.adafruit.com/product/4554)
+3. [ESP32 microcontroller](https://www.espressif.com/en/products/socs/esp32)
+4. [Stepper Motor](https://www.amazon.com/gp/product/B07TJWMZZY/ref=ppx_yo_dt_b_search_asin_title?ie=UTF8&th=1)
+5. [eInk Display](https://www.adafruit.com/product/4687)
 
 ### Concept Sketch
 
@@ -36,20 +38,21 @@ oTTo is a two-wheel self-balancing robot designed as an experimental hardware pl
 
 ### Datasheet
 
-1. [ESP8266 chip datasheet](https://espressif.com/sites/default/files/documentation/0a-esp8266ex_datasheet_en.pdf)
-2. [ESP8266 chip technical reference](https://www.espressif.com/sites/default/files/documentation/esp8266-technical_reference_en.pdf)
+1. [ESP32 chip datasheet](https://www.espressif.com/sites/default/files/documentation/esp32_datasheet_en.pdf)
+2. [ESP32 chip technical reference](https://www.espressif.com/sites/default/files/documentation/esp32_technical_reference_manual_en.pdf)
 3. [A4988 stepper motor driver chip datasheet](https://www.pololu.com/file/0J450/A4988.pdf)
-4. Current-based motors? brush-less motors?
-5. can-bus control?
+4. [Stepper Motor](https://datasheetspdf.com/pdf-file/928661/MotionKing/17HS4401/1)
+5. [eInk Display Controller](https://cdn-learn.adafruit.com/assets/assets/000/092/748/original/SSD1675_0.pdf?1593792604)
 
 ### SDKs & Libraries
 
-1. [ESP8266 RTOS SDK](https://docs.espressif.com/projects/esp8266-rtos-sdk/en/latest/get-started/index.html)
+1. [ESP32 RTOS SDK](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/freertos.html)
 2. [ESP32 IDF SDK](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/index.html), since the RTOS SDK is very close to it
-3. [BNO080/BNO085 driver](https://github.com/hcrest/bno080-driver)
+3. [ICM-20948 driver](https://github.com/adafruit/Adafruit_ICM20X)
 4. [Custom Simulink library](https://ww2.mathworks.cn/help/simulink/ug/creating-block-libraries.html?lang=en)
 5. [Custom Simulink block](https://www.mathworks.com/help//simulink/ug/tutorial-creating-a-custom-block.html?requestedDomain=)
 6. [MATLAB UDP functions](https://www.mathworks.com/help/instrument/udp-interface.html?s_tid=CRUX_lftnav)
+7. [eInk Display Driver](https://github.com/adafruit/Adafruit_EPD)
 
 ### Debugging
 
