@@ -1,0 +1,20 @@
+name: scp copy folder to remote via SSH
+
+on:
+  push
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      CI: true
+      LOCAL: test
+    steps:
+      - name: Copy folder content recursively to remote
+        uses: ./
+        with:
+          local: test
+          remote: scp/directory
+          host: ${{ shay.ecn.purdue.edu.HOST }}
+          username: ${{ 477grp5.SSH_USER }}
+          password: ${{ ottofive5555.PASSWORD }}
