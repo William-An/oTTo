@@ -25,6 +25,10 @@
         "initializer_list": "c",
         "valarray": "c",
         "*.ipp": "c",
-        "ranges": "c"
+        "ranges": "c",
+        "fstream": "cpp",
+        "ostream": "cpp",
+        "sstream": "cpp",
+        "streambuf": "cpp"
     }
 }
