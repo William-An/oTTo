@@ -6,6 +6,11 @@ GenericIMU::GenericIMU(uint32_t freq) {
     filter.begin(freq);
 }
 
+GenericIMU::~GenericIMU() {
+
+}
+
+
 void GenericIMU::runFusion() {
     filter.update(gyroVec.x, gyroVec.y, gyroVec.z, 
                   accelVec.x, accelVec.y, accelVec.z,

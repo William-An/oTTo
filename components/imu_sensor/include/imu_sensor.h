@@ -42,12 +42,12 @@ class GenericIMU{
         virtual ~GenericIMU();
 
         // Sensor calibration method
-        virtual void calibrate();
+        virtual void calibrate() = 0;
 
         // Sensor data update methods, should set the class members for each sensor
-        virtual void updateAccel();
-        virtual void updateGyro();
-        virtual void updateMagnet();
+        virtual void updateAccel() = 0;
+        virtual void updateGyro() = 0;
+        virtual void updateMagnet() = 0;
         void updateAll() {
             updateAccel();
             updateGyro();

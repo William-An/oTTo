@@ -11,12 +11,16 @@
 #include "freertos/task.h"
 #include "esp_system.h"
 #include "esp_spi_flash.h"
+#include "imu_sensor.h"
+#include "imu_icm_20948.h"
 
 extern "C" void app_main(void);
 
 void app_main(void)
 {
     printf("Hello world!\n");
+
+    ICM20948IMU imu(100);
 
     /* Print chip information */
     esp_chip_info_t chip_info;
