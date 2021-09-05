@@ -29,6 +29,26 @@
         "fstream": "cpp",
         "ostream": "cpp",
         "sstream": "cpp",
-        "streambuf": "cpp"
+        "streambuf": "cpp",
+        "any": "cpp",
+        "atomic": "cpp",
+        "bitset": "cpp",
+        "chrono": "cpp",
+        "complex": "cpp",
+        "iterator": "cpp",
+        "memory_resource": "cpp",
+        "optional": "cpp",
+        "future": "cpp",
+        "istream": "cpp",
+        "system_error": "cpp",
+        "thread": "cpp",
+        "functional": "cpp",
+        "tuple": "cpp",
+        "variant": "cpp",
+        "strstream": "cpp",
+        "coroutine": "cpp",
+        "new": "cpp",
+        "stdexcept": "cpp",
+        "stop_token": "cpp"
     }
 }

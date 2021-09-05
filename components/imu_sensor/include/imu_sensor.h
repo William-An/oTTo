@@ -102,6 +102,8 @@ class GenericIMU {
         // Sensor update frequency, in Hz
         uint32_t updateFreq;
     private:
+        // Private as we let the base fusion algorithm
+        // handle this
         AngleVector3_t eulerAngles;
 };
 

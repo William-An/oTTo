@@ -25,6 +25,11 @@ class ICM20948IMU : public GenericIMU {
         void updateGyro();
         void updateMagnet();
 
+        // Mock testing methods
+        void updateMockAccel(Vector3_t);
+        void updateMockGyro(Vector3_t);
+        void updateMockMagnet(Vector3_t);
+
     private:
         // TODO Might need some member fields here
 };

@@ -24,3 +24,15 @@ void ICM20948IMU::updateGyro() {
 void ICM20948IMU::updateMagnet() {
 
 }
+
+void ICM20948IMU::updateMockAccel(Vector3_t accel) {
+    accelVec = accel;
+}
+
+void ICM20948IMU::updateMockGyro(Vector3_t gyro) {
+    gyroVec = gyro;
+}
+
+void ICM20948IMU::updateMockMagnet(Vector3_t magnet) {
+    magnetVec = magnet;
+}

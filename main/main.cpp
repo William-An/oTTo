@@ -1,14 +1,19 @@
-/* Hello World Example
+/************************************************************
+*
+* @file:      main.cpp
+* @author:    Weili An, Xin Du, Yuqing Fan, Ruichao Zhang
+* @email:     {an107, du201, fan230, zhan3147}@purdue.edu
+* @version:   v1.0.0
+* @date:      09/05/2021
+* @brief:     Top level entry for oTTo project
+*
+************************************************************/
 
-   This example code is in the Public Domain (or CC0 licensed, at your option.)
-
-   Unless required by applicable law or agreed to in writing, this
-   software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
-   CONDITIONS OF ANY KIND, either express or implied.
-*/
 #include <stdio.h>
+#include <math.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "esp_log.h"
 #include "esp_system.h"
 #include "esp_spi_flash.h"
 #include "imu_sensor.h"
@@ -19,9 +24,6 @@ extern "C" void app_main(void);
 void app_main(void)
 {
     printf("Hello world!\n");
-
-    ICM20948IMU imu(100);
-    imu.runFusion();
 
     /* Print chip information */
     esp_chip_info_t chip_info;
