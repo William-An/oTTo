@@ -53,6 +53,7 @@ oTTo is a two-wheel self-balancing robot designed as an experimental hardware pl
 5. [Custom Simulink block](https://www.mathworks.com/help//simulink/ug/tutorial-creating-a-custom-block.html?requestedDomain=)
 6. [MATLAB UDP functions](https://www.mathworks.com/help/instrument/udp-interface.html?s_tid=CRUX_lftnav)
 7. [eInk Display Driver](https://github.com/adafruit/Adafruit_EPD)
+8. [Sensor AHRS Fusion](https://github.com/adafruit/Adafruit_AHRS)
 
 ### Debugging
 

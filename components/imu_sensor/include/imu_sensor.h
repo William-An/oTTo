@@ -90,7 +90,6 @@ class GenericIMU{
         //Adafruit_Madgwick filter;  // faster than NXP
         Adafruit_Mahony filter;  // fastest/smalleset
 
-
         // Unit in g
         Vector3_t accelVec;
         
