@@ -5,5 +5,26 @@
         "${workspaceFolder}/myesp32.cfg"
     ],
     "idf.launchMonitorOnDebugSession": true,
-    "editor.multiCursorModifier": "alt"
+    "editor.multiCursorModifier": "alt",
+    "files.associations": {
+        "*.js": "javascriptreact",
+        "*.S": "asm-intel-x86-generic",
+        "*.s": "asm",
+        "*.h": "c",
+        "array": "c",
+        "*.tcc": "c",
+        "deque": "c",
+        "list": "c",
+        "string": "c",
+        "unordered_map": "c",
+        "unordered_set": "c",
+        "vector": "c",
+        "string_view": "c",
+        "memory": "c",
+        "random": "c",
+        "initializer_list": "c",
+        "valarray": "c",
+        "*.ipp": "c",
+        "ranges": "c"
+    }
 }

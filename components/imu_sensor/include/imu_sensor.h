@@ -14,6 +14,7 @@
 
 #include "Adafruit_AHRS_FusionInterface.h"
 #include "Adafruit_AHRS.h"
+#include <stdint.h>
 
 typedef struct Vector3_t
 {
@@ -30,14 +31,14 @@ typedef struct AngleVector3_t
 } AngleVector3_t;
 
 class GenericIMU{
-    typedef enum FusionAlgorithm_t {
-        MADGWICK, 
-        MAHONY, 
-        NXPFUSION
-    } FusionAlgorithm_t;
+    // typedef enum FusionAlgorithm_t {
+    //     MADGWICK, 
+    //     MAHONY, 
+    //     NXPFUSION
+    // } FusionAlgorithm_t;
 
     public:
-        GenericIMU();
+        GenericIMU(uint32_t freq);
         virtual ~GenericIMU();
 
         // Sensor calibration method
@@ -57,21 +58,24 @@ class GenericIMU{
         void runFusion();
 
         // Getter methods
-        FusionAlgorithm_t getFusionAlgorithm() {
-            return currFusionAlgorithm;
-        }
-
         AngleVector3_t getEulerAngles() {
             return eulerAngles;
         };
+
         Vector3_t getAccel() {
             return accelVec;
         }
+        
         Vector3_t getGyro() {
             return gyroVec;
         }
+
         Vector3_t getMagnet() {
             return magnetVec;
+        }
+
+        uint32_t getUpdateFreq() {
+            return updateFreq;
         }
 
     protected:
@@ -81,6 +85,7 @@ class GenericIMU{
         // ! Used static one instead
         // FusionAlgorithm_t currFusionAlgorithm;
 
+        // Comment out unused fusion algorithm
         //Adafruit_NXPSensorFusion filter; // slowest
         //Adafruit_Madgwick filter;  // faster than NXP
         Adafruit_Mahony filter;  // fastest/smalleset
@@ -94,6 +99,9 @@ class GenericIMU{
 
         // Unit in uT
         Vector3_t magnetVec;
+
+        // Sensor update frequency, in Hz
+        uint32_t updateFreq;
     private:
         AngleVector3_t eulerAngles;
 };
