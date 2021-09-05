@@ -30,7 +30,7 @@ typedef struct AngleVector3_t
     float yaw;
 } AngleVector3_t;
 
-class GenericIMU{
+class GenericIMU {
     // typedef enum FusionAlgorithm_t {
     //     MADGWICK, 
     //     MAHONY, 
