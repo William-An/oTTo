@@ -43,6 +43,7 @@
 #include <inttypes.h>
 #include "driver/i2c.h"
 #include "esp_err.h"
+#include "esp_log.h"
 #include "imu_sensor.h"
 #include "imu_icm_20x.h"
 
@@ -50,11 +51,20 @@
 #define I2C_MASTER_TX_BUF_DISABLE   0                          /*!< I2C master doesn't need buffer */
 #define I2C_MASTER_RX_BUF_DISABLE   0                          /*!< I2C master doesn't need buffer */
 
+// I2C Pin def
+#define ICM20948_I2C_SDA_PIN 27
+#define ICM20948_I2C_SCL_PIN 26
+#define ICM20948_I2C_FREQ 400000
+
+// Use port 0 of I2C
+#define ICM20948_I2C_PORT_NUM 0
+
 #define ICM20948_I2CADDR_DEFAULT 0x69 ///< ICM20948 default i2c address
 #define ICM20948_MAG_ID 0x09          ///< The chip ID for the magnetometer
 
 #define ICM20948_UT_PER_LSB 0.15 ///< mag data LSB value (fixed)
 
+#define AK09916_I2C_ADDR 0x0C
 #define AK09916_WIA2 0x01  ///< Magnetometer
 #define AK09916_ST1 0x10   ///< Magnetometer
 #define AK09916_HXL 0x11   ///< Magnetometer
@@ -69,7 +79,7 @@
 
 /** The accelerometer data range */
 typedef enum {
-  ICM20948_ACCEL_RANGE_2_G,
+  ICM20948_ACCEL_RANGE_2_G = 0,
   ICM20948_ACCEL_RANGE_4_G,
   ICM20948_ACCEL_RANGE_8_G,
   ICM20948_ACCEL_RANGE_16_G,
@@ -77,7 +87,7 @@ typedef enum {
 
 /** The gyro data range */
 typedef enum {
-  ICM20948_GYRO_RANGE_250_DPS,
+  ICM20948_GYRO_RANGE_250_DPS = 0,
   ICM20948_GYRO_RANGE_500_DPS,
   ICM20948_GYRO_RANGE_1000_DPS,
   ICM20948_GYRO_RANGE_2000_DPS,
@@ -115,6 +125,10 @@ class ICM20948IMU : public GenericIMU {
 
         // Configure the sensor
         esp_err_t config();
+        esp_err_t writeGyroRange(icm20948_gyro_range_t);
+        esp_err_t writeAccelRange(icm20948_accel_range_t);
+        esp_err_t writeMagRange(uint8_t);
+
 
         // Default i2c setting
         esp_err_t begin();
@@ -138,7 +152,10 @@ class ICM20948IMU : public GenericIMU {
         float getTemp();
 
     private:
-        // TODO Might need some member fields here
+        esp_err_t setBank(uint8_t);
+        esp_err_t reset();
+        esp_err_t readRaw();
+
         // Onboard temp sensor reading
         float temp;
 
@@ -146,6 +163,17 @@ class ICM20948IMU : public GenericIMU {
         i2c_config_t conf;
         i2c_port_t portNum;
         uint8_t icm_20948_addr;
+
+        // Raw data
+        uint16_t rawAccelX, rawAccelY, rawAccelZ;
+        uint16_t rawGyroX, rawGyroY, rawGyroZ;
+        uint16_t rawMagX, rawMagY, rawMagZ;
+        uint16_t rawTemp;
+
+        // Sensor config
+        icm20948_accel_range_t accelRange;
+        icm20948_gyro_range_t  gyroRange;
+
 };
 
 
