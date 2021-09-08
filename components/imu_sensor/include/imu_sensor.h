@@ -14,6 +14,7 @@
 
 #include "Adafruit_AHRS_FusionInterface.h"
 #include "Adafruit_AHRS.h"
+#include "esp_err.h"
 #include <stdint.h>
 
 typedef struct Vector3_t
@@ -45,13 +46,20 @@ class GenericIMU {
         virtual void calibrate() = 0;
 
         // Sensor data update methods, should set the class members for each sensor
-        virtual void updateAccel() = 0;
-        virtual void updateGyro() = 0;
-        virtual void updateMagnet() = 0;
-        void updateAll() {
-            updateAccel();
-            updateGyro();
-            updateMagnet();
+        virtual esp_err_t updateAccel() = 0;
+        virtual esp_err_t updateGyro() = 0;
+        virtual esp_err_t updateMagnet() = 0;
+        esp_err_t updateAll() {
+            esp_err_t accel_err     = updateAccel();
+            esp_err_t gyro_err      = updateGyro();
+            esp_err_t magnet_err    = updateMagnet();
+
+            if (accel_err != ESP_OK)
+                return accel_err;
+            if (gyro_err != ESP_OK)
+                return gyro_err;
+            if (magnet_err != ESP_OK)
+                return magnet_err;
         }
 
         // Run selected fusion algorithm to update euler angles

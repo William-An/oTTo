@@ -42,8 +42,13 @@
 
 #include <inttypes.h>
 #include "driver/i2c.h"
+#include "esp_err.h"
 #include "imu_sensor.h"
 #include "imu_icm_20x.h"
+
+#define I2C_MASTER_TIMEOUT_MS       1000
+#define I2C_MASTER_TX_BUF_DISABLE   0                          /*!< I2C master doesn't need buffer */
+#define I2C_MASTER_RX_BUF_DISABLE   0                          /*!< I2C master doesn't need buffer */
 
 #define ICM20948_I2CADDR_DEFAULT 0x69 ///< ICM20948 default i2c address
 #define ICM20948_MAG_ID 0x09          ///< The chip ID for the magnetometer
@@ -96,23 +101,32 @@ typedef enum {
 
 class ICM20948IMU : public GenericIMU {
     public:
-        ICM20948IMU(uint32_t freq);
+        ICM20948IMU(uint32_t freq, uint8_t addr);
 
         // Inherit methods
         ~ICM20948IMU(){};
         void calibrate();
-        void updateAccel();
-        void updateGyro();
-        void updateMagnet();
+        esp_err_t updateAccel();
+        esp_err_t updateGyro();
+        esp_err_t updateMagnet();
 
-        // Use selfTest functionality
+        //? Use selfTest functionality
         void selfTest();
 
         // Configure the sensor
-        void config();
+        esp_err_t config();
 
-        // Begin transcation with the sensor
-        void begin();
+        // Default i2c setting
+        esp_err_t begin();
+
+        // Begin transcation with the sensor and setup basic stuffs
+        esp_err_t begin(i2c_port_t, i2c_config_t);
+
+        // ICM 20948 Register read and write functions
+        // TODO Wrap ICM read and write
+        esp_err_t readReg(uint8_t regAddr, uint8_t* data, size_t len);
+
+        esp_err_t writeReg(uint8_t regAddr, uint8_t data);
 
         // Mock testing methods
         void updateMockAccel(Vector3_t);
@@ -120,12 +134,18 @@ class ICM20948IMU : public GenericIMU {
         void updateMockMagnet(Vector3_t);
 
         // Temperature sensor getter and setter
-        void updateTemp();
+        esp_err_t updateTemp();
         float getTemp();
 
     private:
         // TODO Might need some member fields here
+        // Onboard temp sensor reading
         float temp;
+
+        // I2C config
+        i2c_config_t conf;
+        i2c_port_t portNum;
+        uint8_t icm_20948_addr;
 };
 
 
