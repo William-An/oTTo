@@ -30,5 +30,6 @@
         "ostream": "cpp",
         "sstream": "cpp",
         "streambuf": "cpp"
-    }
+    },
+    "idf.port": "/dev/cu.usbserial-14430"
 }
