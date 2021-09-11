@@ -15,8 +15,32 @@
 #include "motor_driver.h"
 #include <inttypes.h>
 
-// class A4988_Driver : public GenericMotorDriver {
-    
-// };
+typedef struct Nema17Config_t {
+    float fullStep;
+    float wheelRadius;
+};
+
+class A4988_Driver : public GenericMotorDiver {
+    public:
+        A4988_Driver();
+
+        // Inherit methods
+        ~A4988_Driver(){};
+        void setContinuous(float omega);
+        void setFixed(float angle, float omega);
+        void setPos(bool pos);
+        void halt();
+        float getPower();
+        float getMaxOmega();
+        float getOmega();
+        float getAngle();
+        float getRestAngle();
+        bool isContinuous();
+        bool isHalted();
+
+    private:
+        float steps = 1 / 16;
+        bool pos = 1;
+};
 
 #endif
