@@ -61,6 +61,7 @@ dkms.conf
 # ESP32 IDF
 build/
 sdkconfig
+sdkconfig.old
 
 # Logging
 *.log
