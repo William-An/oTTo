@@ -68,7 +68,7 @@ void app_main(void)
 
         imu.runFusion();
         eulerAngles = imu.getEulerAngles();
-        ESP_LOGI("[ICM ARHS]", "roll: %.2f pitch: %.2f yaw: %.2f", eulerAngles.roll, eulerAngles.pitch, eulerAngles.yaw);
+        ESP_LOGI("[ICM ARHS]", "r%.2frp%.2fpy%.2fy", eulerAngles.roll, eulerAngles.pitch, eulerAngles.yaw);
 
         // imu.logRaw();
 
