@@ -16,6 +16,8 @@
 #include "Adafruit_AHRS.h"
 #include "esp_err.h"
 #include <stdint.h>
+#include <math.h>
+
 
 typedef struct Vector3
 {
@@ -45,22 +47,8 @@ class GenericIMU {
         // Sensor calibration method
         virtual void calibrate() = 0;
 
-        // Sensor data update methods, should set the class members for each sensor
-        virtual esp_err_t updateAccel() = 0;
-        virtual esp_err_t updateGyro() = 0;
-        virtual esp_err_t updateMagnet() = 0;
-        esp_err_t updateAll() {
-            esp_err_t accel_err     = updateAccel();
-            esp_err_t gyro_err      = updateGyro();
-            esp_err_t magnet_err    = updateMagnet();
-
-            if (accel_err != ESP_OK)
-                return accel_err;
-            if (gyro_err != ESP_OK)
-                return gyro_err;
-            if (magnet_err != ESP_OK)
-                return magnet_err;
-        }
+        // Sensor data update method
+        virtual esp_err_t updateAll() = 0;
 
         // Run selected fusion algorithm to update euler angles
         void runFusion();
@@ -109,7 +97,7 @@ class GenericIMU {
 
         // Sensor update frequency, in Hz
         uint32_t updateFreq;
-    private:
+    protected:
         // Private as we let the base fusion algorithm
         // handle this
         AngleVector3_t eulerAngles;

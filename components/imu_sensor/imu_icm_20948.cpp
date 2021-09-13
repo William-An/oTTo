@@ -62,8 +62,6 @@ esp_err_t ICM20948IMU::begin(i2c_port_t i2cPortNum, i2c_config_t i2cConf) {
     if (err != ESP_OK)
         return err;
 
-    // TODO Wake up ICM and configure basic
-
     // WHO AM I
     err = readReg(ICM20X_B0_WHOAMI, &buf, 1);
     if (err != ESP_OK)
@@ -76,7 +74,7 @@ esp_err_t ICM20948IMU::begin(i2c_port_t i2cPortNum, i2c_config_t i2cConf) {
         return err;
 
     // Wake up from sleep mode
-    buf = 1;
+    buf = 0x1;
     err = writeReg(ICM20X_B0_PWR_MGMT_1, buf);
 
     // Write gyro and accel range to largest
@@ -88,24 +86,20 @@ esp_err_t ICM20948IMU::begin(i2c_port_t i2cPortNum, i2c_config_t i2cConf) {
     err = writeAccelRange(ICM20948_ACCEL_RANGE_16_G);
     if (err != ESP_OK)
         return err;
-    setBank(0);
 
     // Set gyro and accel sampling rate
-    err = writeGyroRange(ICM20948_GYRO_RANGE_2000_DPS);
+    err = setGyroRate(ICM20948_GYRO_RATE_100_HZ);
     if (err != ESP_OK)
         return err;
     
-    // Init mag
+    err = setAccelRate(ICM20948_ACCEL_RATE_100_HZ);
+    if (err != ESP_OK)
+        return err;
+    
+    // Init mag, setup comm and sampling rate
     err = initMag();
     if (err != ESP_OK)
         return err;
-    
-    // Perform a raw read
-    readRaw();
-    ESP_LOGI("[ICM]", "Raw Accel: x = %d y = %d z = %d", rawAccelX, rawAccelY, rawAccelZ);
-    ESP_LOGI("[ICM]", "Raw Gyro: x = %d y = %d z = %d", rawGyroX, rawGyroY, rawGyroZ);
-    ESP_LOGI("[ICM]", "Raw Mag: x = %d y = %d z = %d", rawMagX, rawMagY, rawMagZ);
-    ESP_LOGI("[ICM]", "Raw temp: t = %d", rawTemp);
 
     return err;
 }
@@ -193,6 +187,14 @@ esp_err_t ICM20948IMU::readReg(uint8_t regAddr, uint8_t* data, size_t len) {
 end:
     i2c_cmd_link_delete(handle);
     return err;
+}
+
+esp_err_t ICM20948IMU::updateAll() {
+    esp_err_t err = ESP_OK;
+    err = readRaw();
+    if (err != ESP_OK)
+        return err;
+    return processRaw();
 }
 
 /**
@@ -535,7 +537,7 @@ esp_err_t ICM20948IMU::setI2CBypass(bool bypass_i2c) {
         return err;
     
     // Mask write
-    err = maskWriteReg(ICM20X_B0_REG_INT_PIN_CFG, 0b10, 0b10, true);
+    err = maskWriteReg(ICM20X_B0_REG_INT_PIN_CFG, 0b10, bypass_i2c ? 0b10 : 0b0, true);
     return err;
 }
 
@@ -552,7 +554,9 @@ esp_err_t ICM20948IMU::configureI2CMaster() {
     if (err != ESP_OK)
         return err;
 
-    writeReg(ICM20X_B3_I2C_MST_CTRL, 0x17);
+    err = writeReg(ICM20X_B3_I2C_MST_CTRL, 0x17);
+    if (err != ESP_OK)
+        return err;
 
     return setBank(0);
 }
@@ -570,7 +574,7 @@ esp_err_t ICM20948IMU::enableI2CMaster(bool enable_i2c_master) {
     if (err != ESP_OK)
         return err;
 
-    return maskWriteReg(ICM20X_B0_USER_CTRL, 0x20, 0x20, true);
+    return maskWriteReg(ICM20X_B0_USER_CTRL, 0x20, enable_i2c_master ? 0x20 : 0x0, true);
 }
 
 /**
@@ -640,7 +644,7 @@ esp_err_t ICM20948IMU::auxillaryRegisterTransaction(bool read,
     if (err != ESP_OK)
         return err;
 
-    err = writeReg(ICM20X_B3_I2C_SLV4_REG, 0x1);
+    err = writeReg(ICM20X_B3_I2C_SLV4_REG, regAddr);
     if (err != ESP_OK)
         return err;
 
@@ -698,15 +702,15 @@ esp_err_t ICM20948IMU::readRaw() {
         return err;
     
     // Save buffer data into raw member fields
-    rawAccelX = buf[0] << 8 | buf[1];
-    rawAccelY = buf[2] << 8 | buf[3];
-    rawAccelZ = buf[4] << 8 | buf[5];
+    rawAccelX = (buf[0] << 8) | (buf[1] & 0xff);
+    rawAccelY = (buf[2] << 8) | (buf[3] & 0xff);
+    rawAccelZ = (buf[4] << 8) | (buf[5] & 0xff);
 
-    rawGyroX = buf[6] << 8 | buf[7];
-    rawGyroX = buf[8] << 8 | buf[9];
-    rawGyroX = buf[10] << 8 | buf[11];
+    rawGyroX = (buf[6] << 8) | (buf[7] & 0xff);
+    rawGyroY = (buf[8] << 8) | (buf[9] & 0xff);
+    rawGyroZ = (buf[10] << 8) | (buf[11] & 0xff);
 
-    rawTemp = buf[12] << 8 | buf[13];
+    rawTemp = (buf[12] << 8) | (buf[13] & 0xff);
 
     rawMagX = ((buf[16] << 8) |
              (buf[15] & 0xFF)); // Mag data is read little endian
@@ -716,19 +720,60 @@ esp_err_t ICM20948IMU::readRaw() {
     return err;
 }
 
-// TODO
-esp_err_t ICM20948IMU::updateAccel() {
-    return ESP_ERR_NOT_SUPPORTED;
+/**
+ * @brief Process raw sensor data read
+ *        and update structs
+ * 
+ * @return esp_err_t 
+ */
+esp_err_t ICM20948IMU::processRaw() {
+    // Set scales
+    float accelScale = 1.0;    
+    float gyroScale = 1.0;
+
+    if (gyroRange == ICM20948_GYRO_RANGE_250_DPS)
+        gyroScale = 131.0;
+    else if (gyroRange == ICM20948_GYRO_RANGE_500_DPS)
+        gyroScale = 65.5;
+    else if (gyroRange == ICM20948_GYRO_RANGE_1000_DPS)
+        gyroScale = 32.8;
+    else if (gyroRange == ICM20948_GYRO_RANGE_2000_DPS)
+        gyroScale = 16.4;
+
+    if (accelRange == ICM20948_ACCEL_RANGE_2_G)
+        accelScale = 16384.0;
+    else if (accelRange == ICM20948_ACCEL_RANGE_4_G)
+        accelScale = 8192.0;
+    else if (accelRange == ICM20948_ACCEL_RANGE_8_G)
+        accelScale = 4096.0;
+    else if (accelRange == ICM20948_ACCEL_RANGE_16_G)
+        accelScale = 2048.0;
+
+    // Set processed member vars
+    // in unit of g
+    accelVec.x = rawAccelX / accelScale;
+    accelVec.y = rawAccelY / accelScale;
+    accelVec.z = rawAccelZ / accelScale;
+
+    // dps
+    gyroVec.x = (rawGyroX / gyroScale);
+    gyroVec.y = (rawGyroY / gyroScale);
+    gyroVec.z = (rawGyroZ / gyroScale);
+
+    // in uT
+    magnetVec.x = rawMagX * ICM20948_UT_PER_LSB;
+    magnetVec.y = rawMagY * ICM20948_UT_PER_LSB;
+    magnetVec.z = rawMagZ * ICM20948_UT_PER_LSB;
+
+    temp = (rawTemp / 333.87) + 21.0;
+
+    return ESP_OK;
 }
 
-// TODO
-esp_err_t ICM20948IMU::updateGyro() {
-    return ESP_ERR_NOT_SUPPORTED;
-}
-
-// TODO
-esp_err_t ICM20948IMU::updateMagnet() {
-    return ESP_ERR_NOT_SUPPORTED;
+void ICM20948IMU::logRaw() {
+    ESP_LOGI("[RAW]", "RAW Accel %d %d %d", rawAccelX, rawAccelY, rawAccelZ);
+    ESP_LOGI("[RAW]", "RAW Gyro %d %d %d", rawGyroX, rawGyroY, rawGyroZ);
+    ESP_LOGI("[RAW]", "RAW Mag %d %d %d", rawMagX, rawMagY, rawMagZ);
 }
 
 void ICM20948IMU::updateMockAccel(Vector3_t accel) {

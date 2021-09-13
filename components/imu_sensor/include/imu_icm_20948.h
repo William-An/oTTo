@@ -145,9 +145,7 @@ class ICM20948IMU : public GenericIMU {
         // Inherit methods
         ~ICM20948IMU(){};
         void calibrate();
-        esp_err_t updateAccel();
-        esp_err_t updateGyro();
-        esp_err_t updateMagnet();
+        esp_err_t updateAll();
 
         //? Use selfTest functionality
         void selfTest();
@@ -191,6 +189,9 @@ class ICM20948IMU : public GenericIMU {
         esp_err_t maskWriteReg(uint8_t regAddr, uint8_t regMask,uint8_t data, bool clearMasked);
         esp_err_t readMagReg(uint8_t regAddr, uint8_t *data);
         esp_err_t writeMagReg(uint8_t regAddr, uint8_t data);
+        
+        // TODO  DEBUG FUNC
+        void logRaw();
 
         // Mock testing methods
         void updateMockAccel(Vector3_t);
@@ -198,8 +199,9 @@ class ICM20948IMU : public GenericIMU {
         void updateMockMagnet(Vector3_t);
 
         // Temperature sensor getter and setter
-        esp_err_t updateTemp();
-        float getTemp();
+        float getTemp() {
+          return temp;
+        }
 
     private:
         esp_err_t setBank(uint8_t);
@@ -207,7 +209,7 @@ class ICM20948IMU : public GenericIMU {
         esp_err_t readRaw();
         esp_err_t processRaw();
 
-        // Onboard temp sensor reading
+        // Onboard temp sensor reading, in C
         float temp;
 
         // I2C config
@@ -216,10 +218,10 @@ class ICM20948IMU : public GenericIMU {
         uint8_t icm_20948_addr;
 
         // Raw data
-        uint16_t rawAccelX, rawAccelY, rawAccelZ;
-        uint16_t rawGyroX, rawGyroY, rawGyroZ;
-        uint16_t rawMagX, rawMagY, rawMagZ;
-        uint16_t rawTemp;
+        int16_t rawAccelX, rawAccelY, rawAccelZ;
+        int16_t rawGyroX, rawGyroY, rawGyroZ;
+        int16_t rawMagX, rawMagY, rawMagZ;
+        int16_t rawTemp;
 
         // Sensor config
         icm20948_accel_range_t accelRange;

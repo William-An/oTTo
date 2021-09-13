@@ -47,8 +47,31 @@ void app_main(void)
     ICM20948IMU imu(100, ICM20948_I2CADDR_DEFAULT);
     ESP_ERROR_CHECK(imu.begin());
     fflush(stdout);
-    // esp_restart();
+
+    Vector3_t accelVec;
+    Vector3_t gyroVec;
+    Vector3_t magnetVec;
+    float temp;
+    AngleVector3 eulerAngles;
     for(;;) {
-        vTaskDelay(1000 / portTICK_RATE_MS);
+        // Perform a read
+        imu.updateAll();
+        // accelVec = imu.getAccel();
+        // gyroVec = imu.getGyro();
+        // magnetVec = imu.getMagnet();
+        // temp = imu.getTemp();
+
+        // ESP_LOGI("[ICM]", "Accel: x = %.5f y = %.5f z = %.5f", accelVec.x, accelVec.y, accelVec.z);
+        // ESP_LOGI("[ICM]", "Gyro: x = %.5f y = %.5f z = %.5f", gyroVec.x, gyroVec.y, gyroVec.z);
+        // ESP_LOGI("[ICM]", "Mag: x = %.5f y = %.5f z = %.5f", magnetVec.x, magnetVec.y, magnetVec.z);
+        // ESP_LOGI("[ICM]", "temp: t = %.5f", temp);
+
+        imu.runFusion();
+        eulerAngles = imu.getEulerAngles();
+        ESP_LOGI("[ICM ARHS]", "roll: %.2f pitch: %.2f yaw: %.2f", eulerAngles.roll, eulerAngles.pitch, eulerAngles.yaw);
+
+        // imu.logRaw();
+
+        vTaskDelay(10 / portTICK_RATE_MS);
     }
 }
