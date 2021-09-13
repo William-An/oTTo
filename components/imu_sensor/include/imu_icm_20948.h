@@ -94,6 +94,34 @@ typedef enum {
 } icm20948_gyro_range_t;
 
 /**
+ * @brief Predefined sampling rate to divisor coeff 
+ *        for gyroscope
+ * 
+ */
+typedef enum {
+  ICM20948_GYRO_RATE_1000_HZ = 0,
+  ICM20948_GYRO_RATE_500_HZ = 1,
+  ICM20948_GYRO_RATE_250_HZ = 3,
+  ICM20948_GYRO_RATE_100_HZ = 10,
+  ICM20948_GYRO_RATE_50_HZ = 21,
+  ICM20948_GYRO_RATE_10_HZ = 109
+} icm20948_gyro_rate_t;
+
+/**
+ * @brief Predefined sampling rate to divisor coeff 
+ *        for accelerometer
+ * 
+ */
+typedef enum {
+  ICM20948_ACCEL_RATE_1000_HZ = 0,
+  ICM20948_ACCEL_RATE_500_HZ = 1,
+  ICM20948_ACCEL_RATE_250_HZ = 3,
+  ICM20948_ACCEL_RATE_100_HZ = 10,
+  ICM20948_ACCEL_RATE_50_HZ = 21,
+  ICM20948_ACCEL_RATE_10_HZ = 111
+} icm20948_accel_rate_t;
+
+/**
  * @brief Data rates/modes for the embedded AsahiKASEI AK09916 3-axis
  * magnetometer
  *
@@ -129,6 +157,9 @@ class ICM20948IMU : public GenericIMU {
         esp_err_t writeAccelRange(icm20948_accel_range_t);
         esp_err_t writeMagRange(uint8_t);
 
+        esp_err_t setAccelRateDivisor(icm20948_accel_rate_t new_accel_divisor);
+        esp_err_t setGyroRateDivisor(icm20948_gyro_rate_t new_gyro_divisor);
+
 
         // Default i2c setting
         esp_err_t begin();
@@ -139,8 +170,9 @@ class ICM20948IMU : public GenericIMU {
         // ICM 20948 Register read and write functions
         // TODO Wrap ICM read and write
         esp_err_t readReg(uint8_t regAddr, uint8_t* data, size_t len);
-
+        // Future: Multiple bytes write support
         esp_err_t writeReg(uint8_t regAddr, uint8_t data);
+        esp_err_t maskWriteReg(uint8_t regAddr, uint8_t regMask,uint8_t data, bool clearMasked);
 
         // Mock testing methods
         void updateMockAccel(Vector3_t);

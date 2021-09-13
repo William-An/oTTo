@@ -27,7 +27,7 @@
     ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
     (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
     SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */s
+ */
 
 /**
  * @brief Construct a new ICM20948IMU::ICM20948IMU object
@@ -88,8 +88,12 @@ esp_err_t ICM20948IMU::begin(i2c_port_t i2cPortNum, i2c_config_t i2cConf) {
     err = writeAccelRange(ICM20948_ACCEL_RANGE_16_G);
     if (err != ESP_OK)
         return err;
-
     setBank(0);
+
+    // Set gyro and accel sampling rate
+    err = writeGyroRange(ICM20948_GYRO_RANGE_2000_DPS);
+    if (err != ESP_OK)
+        return err;
   
 
     return err;
@@ -225,6 +229,35 @@ end:
     return err;
 }
 
+
+/**
+ * @brief Write to a register in ICM 20948 with masking and option
+ *        to OR the masked bits
+ * 
+ * @param regAddr 
+ * @param regMask 
+ * @param data
+ * @param clearMasked:  Whether to clear the original bits in the 
+ *                      mask positions 
+ * @return esp_err_t 
+ */
+esp_err_t ICM20948IMU::maskWriteReg(uint8_t regAddr, uint8_t regMask,uint8_t data, bool clearMasked) {
+    uint8_t buf = 0;
+    esp_err_t err = ESP_OK;
+
+    // Read the current reg value
+    err = readReg(regAddr, &buf, 1);
+    if (err != ESP_OK)
+        return err;
+    
+    // Whether to OR the data and write to reg
+    buf = (data & regMask) | (clearMasked ? (~regMask) & buf : buf);
+    err = writeReg(regAddr, buf);
+    if (err != ESP_OK)
+        return err;
+
+}
+
 /**
  * @brief Configure Gyroscope range
  * 
@@ -261,6 +294,7 @@ esp_err_t ICM20948IMU::writeGyroRange(icm20948_gyro_range_t range) {
  * @param range 
  * @return esp_err_t 
  */
+// TODO Improve to multiple byte write
 esp_err_t ICM20948IMU::writeAccelRange(icm20948_accel_range_t range) {
     uint8_t buf = 0;
     esp_err_t err = ESP_OK;
@@ -285,8 +319,67 @@ esp_err_t ICM20948IMU::writeAccelRange(icm20948_accel_range_t range) {
     return err;
 }
 
+/**
+ * @brief Configure magnetometer range
+ * 
+ * @param range 
+ * @return esp_err_t 
+ */
 esp_err_t ICM20948IMU::writeMagRange(uint8_t range) {
-    return ESP_OK;
+    return ESP_ERR_NOT_SUPPORTED;
+}
+
+/**
+ * @brief Set the sampling rate for the accelerometter
+ * 
+ * @param new_accel_divisor: sampling rate =
+ *          1.125 kHz/(1 + new_accel_divisor[11:0])
+ */
+esp_err_t ICM20948IMU::setAccelRateDivisor(icm20948_accel_rate_t new_accel_divisor) {
+    uint8_t buf = 0;
+    esp_err_t err = ESP_OK;
+
+    // Set bank
+    err = setBank(2);
+    if (err != ESP_OK)
+        return err;
+
+    // Set the sampling rate MSB
+    err = writeReg(ICM20X_B2_ACCEL_SMPLRT_DIV_1, new_accel_divisor >> 8);
+    if (err != ESP_OK)
+        return err;
+
+    // Set the sampling rate LSB
+    err = writeReg(ICM20X_B2_ACCEL_SMPLRT_DIV_1 + 1, new_accel_divisor & 0xFF);
+    if (err != ESP_OK)
+        return err;
+    
+    err = setBank(0);
+    return err;
+}
+
+/**
+ * @brief Set the sampling rate for the gyroscope
+ * 
+ * @param new_gyro_divisor: sampling rate =
+ *          1.1 kHz/(1 + new_gyro_divisor)
+ */
+esp_err_t ICM20948IMU::setGyroRateDivisor(icm20948_gyro_rate_t new_gyro_divisor) {
+    uint8_t buf = 0;
+    esp_err_t err = ESP_OK;
+
+    // Set bank
+    err = setBank(2);
+    if (err != ESP_OK)
+        return err;
+
+    // Set the sampling rate
+    err = writeReg(ICM20X_B2_GYRO_SMPLRT_DIV, new_gyro_divisor);
+    if (err != ESP_OK)
+        return err;
+    
+    err = setBank(0);
+    return err;
 }
 
 // TODO
@@ -295,7 +388,7 @@ void ICM20948IMU::calibrate() {
 }
 
 /**
- * @brief Read raw sensor bytes into temp buffer
+ * @brief Read raw sensor bytes into raw data member fields
  * 
  * @return esp_err_t 
  */
@@ -394,7 +487,9 @@ esp_err_t ICM20948IMU::reset() {
         err = readReg(ICM20X_B0_PWR_MGMT_1, &buf, 1);
         if (err != ESP_OK)
             return err;
-        else if ((buf >> 7) & 1 == 0) {   // RESET bit will be auto cleared on reset
+        else if (((buf >> 7) & 1) == 0) {   
+            // RESET bit will be auto cleared on reset, 
+            // which is the sign that the soft reset is done 
             break;
         }
     }

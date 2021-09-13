@@ -17,14 +17,14 @@
 #include "esp_err.h"
 #include <stdint.h>
 
-typedef struct Vector3_t
+typedef struct Vector3
 {
     float x;
     float y;
     float z;
 } Vector3_t;
 
-typedef struct AngleVector3_t
+typedef struct AngleVector3
 {
     float roll;
     float pitch;
