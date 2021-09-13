@@ -94,7 +94,11 @@ esp_err_t ICM20948IMU::begin(i2c_port_t i2cPortNum, i2c_config_t i2cConf) {
     err = writeGyroRange(ICM20948_GYRO_RANGE_2000_DPS);
     if (err != ESP_OK)
         return err;
-  
+    
+    // Init mag
+    err = initMag();
+    if (err != ESP_OK)
+        return err;
 
     return err;
 }
@@ -252,9 +256,52 @@ esp_err_t ICM20948IMU::maskWriteReg(uint8_t regAddr, uint8_t regMask,uint8_t dat
     
     // Whether to OR the data and write to reg
     buf = (data & regMask) | (clearMasked ? (~regMask) & buf : buf);
-    err = writeReg(regAddr, buf);
+    return writeReg(regAddr, buf);
+}
+
+/**
+ * @brief Initialize ICM20498 Magnetometer for comm
+ * 
+ * @return esp_err_t 
+ */
+esp_err_t ICM20948IMU::initMag() {
+    // TODO
+    uint8_t buf;
+    esp_err_t err = ESP_OK;
+
+    // Setup I2C interface
+    err = setI2CBypass(false);
     if (err != ESP_OK)
         return err;
+    err = configureI2CMaster();
+    if (err != ESP_OK)
+        return err;
+    err = enableI2CMaster(true);
+    if (err != ESP_OK)
+        return err;
+    
+    // Test if aux I2C starts
+    bool aux_i2c_setup_failed = true;
+    for (int i = 0; i < I2C_MASTER_RESETS_BEFORE_FAIL; i++) {
+        err = getMagId(&buf);
+        ESP_ERROR_CHECK(err);
+        if (err != ESP_OK)
+            return err;
+        else if (buf != ICM20948_MAG_ID) {
+            resetI2CMaster();
+        } else {
+            aux_i2c_setup_failed = false;
+            break;
+        }
+    }
+
+    if (aux_i2c_setup_failed)
+        return ESP_ERR_TIMEOUT;
+
+    // Log magid
+    ESP_LOGI("[ICM]", "Mag ID: %X", buf);
+
+    return ESP_OK;
 
 }
 
@@ -336,7 +383,6 @@ esp_err_t ICM20948IMU::writeMagRange(uint8_t range) {
  *          1.125 kHz/(1 + new_accel_divisor[11:0])
  */
 esp_err_t ICM20948IMU::setAccelRateDivisor(icm20948_accel_rate_t new_accel_divisor) {
-    uint8_t buf = 0;
     esp_err_t err = ESP_OK;
 
     // Set bank
@@ -365,7 +411,6 @@ esp_err_t ICM20948IMU::setAccelRateDivisor(icm20948_accel_rate_t new_accel_divis
  *          1.1 kHz/(1 + new_gyro_divisor)
  */
 esp_err_t ICM20948IMU::setGyroRateDivisor(icm20948_gyro_rate_t new_gyro_divisor) {
-    uint8_t buf = 0;
     esp_err_t err = ESP_OK;
 
     // Set bank
@@ -381,6 +426,165 @@ esp_err_t ICM20948IMU::setGyroRateDivisor(icm20948_gyro_rate_t new_gyro_divisor)
     err = setBank(0);
     return err;
 }
+
+/**
+ * @brief Get magnetometer id to test if comm is ready
+ * 
+ * @return esp_err_t 
+ */
+esp_err_t ICM20948IMU::getMagId(uint8_t *dst) {
+    return auxillaryRegisterTransaction(true, 0x80 | AK09916_I2C_ADDR, AK09916_WIA2, 0x0, dst);
+}
+
+/**
+ * @brief Whether to enable ICM20948 I2C Bypass
+ * 
+ * @param bypass_i2c 
+ * @return esp_err_t 
+ */
+esp_err_t ICM20948IMU::setI2CBypass(bool bypass_i2c) {
+    esp_err_t err = ESP_OK;
+
+    // Set bank
+    err = setBank(0);
+    if (err != ESP_OK)
+        return err;
+    
+    // Mask write
+    err = maskWriteReg(ICM20X_B0_REG_INT_PIN_CFG, 0b10, 0b10, true);
+    return err;
+}
+
+/**
+ * @brief Set the I2C clock rate for the auxillary I2C bus to 345.60kHz and
+ *        disable repeated start
+ * 
+ * @return esp_err_t 
+ */
+esp_err_t ICM20948IMU::configureI2CMaster() {
+    esp_err_t err = ESP_OK;
+
+    err = setBank(3);
+    if (err != ESP_OK)
+        return err;
+
+    writeReg(ICM20X_B3_I2C_MST_CTRL, 0x17);
+
+    return setBank(0);
+}
+
+/**
+ * @brief Enable or disable the I2C mastercontroller
+ * 
+ * @param enable_i2c_master 
+ * @return esp_err_t 
+ */
+esp_err_t ICM20948IMU::enableI2CMaster(bool enable_i2c_master) {
+    esp_err_t err = ESP_OK;
+
+    err = setBank(0);
+    if (err != ESP_OK)
+        return err;
+
+    return maskWriteReg(ICM20X_B0_USER_CTRL, 0x20, 0x20, true);
+}
+
+/**
+ * @brief Reset the ICM I2C Master
+ * 
+ * @return esp_err_t 
+ */
+esp_err_t ICM20948IMU::resetI2CMaster() {
+    uint8_t buf;
+    esp_err_t err = ESP_OK;
+
+    err = setBank(0);
+    if (err != ESP_OK)
+        return err;
+
+    err = maskWriteReg(ICM20X_B0_USER_CTRL, 0b10, 0b10, true);
+    if (err != ESP_OK)
+        return err;
+    
+    // Polling
+    while (true) {
+        err = readReg(ICM20X_B0_USER_CTRL, &buf, 1);
+        if (err != ESP_OK)
+            return err;
+        if ((buf >> 1) & 1) // rst bit not yet clear
+            vTaskDelay(20 / portTICK_RATE_MS);
+        else 
+            break;
+    }
+    return err;
+}
+
+/**
+ * @brief Write/read a single byte to a given register address 
+ *        for an I2C slave device on the auxiliary I2C bus
+ * 
+ * @param read 
+ * @param slvAddr 
+ * @param regAddr 
+ * @param data 
+ * @param dst
+ * @return esp_err_t 
+ */
+esp_err_t ICM20948IMU::auxillaryRegisterTransaction(bool read,
+    uint8_t slvAddr,
+    uint8_t regAddr,
+    uint8_t data, uint8_t *dst) {
+    uint8_t buf;
+    esp_err_t err;
+
+    err = setBank(3);
+    if (err != ESP_OK)
+        return err;
+
+    if (read) {
+        slvAddr |= 0x80; // set high bit for read, presumably for multi-byte reads
+    } else { 
+        // Write, put value in DO (data out) register
+        err = writeReg(ICM20X_B3_I2C_SLV4_DO, data);
+        if (err != ESP_OK)
+            return err;
+    }
+
+    // Put slave and slave's reg addr into control regs
+    err = writeReg(ICM20X_B3_I2C_SLV4_ADDR, slvAddr);
+    if (err != ESP_OK)
+        return err;
+
+    err = writeReg(ICM20X_B3_I2C_SLV4_REG, 0x1);
+    if (err != ESP_OK)
+        return err;
+
+    // Issue transcation
+    err = writeReg(ICM20X_B3_I2C_SLV4_CTRL, 0x80);
+    if (err != ESP_OK)
+        return err;
+    
+    // Poll to see the result
+    setBank(0);
+    // Try 100 times
+    for (int i = 0; i < NUM_FINISHED_CHECKS; i++)
+    {
+        err = readReg(ICM20X_B0_I2C_MST_STATUS, &buf, 1);
+        if (err != ESP_OK)
+            return err;
+        if ((buf >> 6) & 1) {
+            // Transcation done
+            setBank(3);
+            if (read) {
+                return readReg(ICM20X_B3_I2C_SLV4_DI, dst, 1);
+            }
+            return err;
+        }
+        vTaskDelay(10 / portTICK_RATE_MS);
+    }
+    return ESP_ERR_TIMEOUT;
+}
+
 
 // TODO
 void ICM20948IMU::calibrate() {
@@ -461,7 +665,8 @@ void ICM20948IMU::updateMockMagnet(Vector3_t magnet) {
  * @return esp_err_t 
  */
 esp_err_t ICM20948IMU::setBank(uint8_t bankNum) {
-    return writeReg(ICM20X_B0_REG_BANK_SEL, bankNum);
+    bankNum = bankNum << 4;
+    return maskWriteReg(ICM20X_B0_REG_BANK_SEL, 0b00110000, bankNum, true);
 }
 
 /**

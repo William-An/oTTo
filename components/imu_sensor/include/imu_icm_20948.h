@@ -153,19 +153,33 @@ class ICM20948IMU : public GenericIMU {
 
         // Configure the sensor
         esp_err_t config();
+        esp_err_t initMag();
         esp_err_t writeGyroRange(icm20948_gyro_range_t);
         esp_err_t writeAccelRange(icm20948_accel_range_t);
         esp_err_t writeMagRange(uint8_t);
 
         esp_err_t setAccelRateDivisor(icm20948_accel_rate_t new_accel_divisor);
         esp_err_t setGyroRateDivisor(icm20948_gyro_rate_t new_gyro_divisor);
-
+        esp_err_t getMagId(uint8_t *dst);
 
         // Default i2c setting
         esp_err_t begin();
 
         // Begin transcation with the sensor and setup basic stuffs
         esp_err_t begin(i2c_port_t, i2c_config_t);
+
+        // ICM I2C Master config
+        esp_err_t setI2CBypass(bool bypass_i2c);
+        esp_err_t configureI2CMaster();
+        esp_err_t enableI2CMaster(bool enable_i2c_master);
+        esp_err_t resetI2CMaster();
+
+        // ICM AUX transcation
+        esp_err_t auxillaryRegisterTransaction(bool read,
+                                               uint8_t slvAddr,
+                                               uint8_t regAddr,
+                                               uint8_t data,
+                                               uint8_t *dst);
 
         // ICM 20948 Register read and write functions
         // TODO Wrap ICM read and write
