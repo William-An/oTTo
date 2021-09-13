@@ -99,6 +99,13 @@ esp_err_t ICM20948IMU::begin(i2c_port_t i2cPortNum, i2c_config_t i2cConf) {
     err = initMag();
     if (err != ESP_OK)
         return err;
+    
+    // Perform a raw read
+    readRaw();
+    ESP_LOGI("[ICM]", "Raw Accel: x = %d y = %d z = %d", rawAccelX, rawAccelY, rawAccelZ);
+    ESP_LOGI("[ICM]", "Raw Gyro: x = %d y = %d z = %d", rawGyroX, rawGyroY, rawGyroZ);
+    ESP_LOGI("[ICM]", "Raw Mag: x = %d y = %d z = %d", rawMagX, rawMagY, rawMagZ);
+    ESP_LOGI("[ICM]", "Raw temp: t = %d", rawTemp);
 
     return err;
 }
@@ -260,12 +267,33 @@ esp_err_t ICM20948IMU::maskWriteReg(uint8_t regAddr, uint8_t regMask,uint8_t dat
 }
 
 /**
+ * @brief Read 1 byte from magnetometer register 
+ * 
+ * @param regAddr 
+ * @param data 
+ * @return esp_err_t 
+ */
+esp_err_t ICM20948IMU::readMagReg(uint8_t regAddr, uint8_t *data) {
+    return auxillaryRegisterTransaction(true, AK09916_I2C_ADDR, regAddr, 0, data);
+}
+
+/**
+ * @brief Write 1 byte to magnetometer register
+ * 
+ * @param regAddr 
+ * @param data 
+ * @return esp_err_t 
+ */
+esp_err_t ICM20948IMU::writeMagReg(uint8_t regAddr, uint8_t data) {
+    return auxillaryRegisterTransaction(false, AK09916_I2C_ADDR, regAddr, data, NULL);
+}
+
+/**
  * @brief Initialize ICM20498 Magnetometer for comm
  * 
  * @return esp_err_t 
  */
 esp_err_t ICM20948IMU::initMag() {
-    // TODO
     uint8_t buf;
     esp_err_t err = ESP_OK;
 
@@ -301,8 +329,34 @@ esp_err_t ICM20948IMU::initMag() {
     // Log magid
     ESP_LOGI("[ICM]", "Mag ID: %X", buf);
 
-    return ESP_OK;
+    // Set init mag data rate
+    err = setMagRate(AK09916_MAG_DATARATE_100_HZ);
+    if (err != ESP_OK)
+        return err;
+    
+    // Setup slv0 proxy
+    err = setBank(3);
+    if (err != ESP_OK)
+        return err;
 
+    // Set slv0 proxy addr
+    // Read data rate same as gyroscope, see sec 11.2 of ICM datasheet 
+    // OR 0x80 to enable read
+    err = writeReg(ICM20X_B3_I2C_SLV0_ADDR, 0x80 | AK09916_I2C_ADDR);
+    if (err != ESP_OK)
+        return err;
+    
+    // Set slv0 proxy start reg addr
+    err = writeReg(ICM20X_B3_I2C_SLV0_REG, AK09916_ST1);
+    if (err != ESP_OK)
+        return err;
+    
+    // Set to read 9 bytes (ST1, 6 measurement bytes, one dummy byte, ST2)
+    err = writeReg(ICM20X_B3_I2C_SLV0_CTRL, 0x80 | 0x09);
+    if (err != ESP_OK)
+        return err;
+
+    return setBank(0);
 }
 
 /**
@@ -382,7 +436,7 @@ esp_err_t ICM20948IMU::writeMagRange(uint8_t range) {
  * @param new_accel_divisor: sampling rate =
  *          1.125 kHz/(1 + new_accel_divisor[11:0])
  */
-esp_err_t ICM20948IMU::setAccelRateDivisor(icm20948_accel_rate_t new_accel_divisor) {
+esp_err_t ICM20948IMU::setAccelRate(icm20948_accel_rate_t new_accel_divisor) {
     esp_err_t err = ESP_OK;
 
     // Set bank
@@ -410,7 +464,7 @@ esp_err_t ICM20948IMU::setAccelRateDivisor(icm20948_accel_rate_t new_accel_divis
  * @param new_gyro_divisor: sampling rate =
  *          1.1 kHz/(1 + new_gyro_divisor)
  */
-esp_err_t ICM20948IMU::setGyroRateDivisor(icm20948_gyro_rate_t new_gyro_divisor) {
+esp_err_t ICM20948IMU::setGyroRate(icm20948_gyro_rate_t new_gyro_divisor) {
     esp_err_t err = ESP_OK;
 
     // Set bank
@@ -426,6 +480,36 @@ esp_err_t ICM20948IMU::setGyroRateDivisor(icm20948_gyro_rate_t new_gyro_divisor)
     err = setBank(0);
     return err;
 }
+
+/**
+ * @brief Set the sampling rate for magnetometer
+ *        According to datasheet at sec 9.3, first set the
+ *        AK09916 into power-down mode and wait for at least 100 us 
+ *        to set the new magnetometer rate
+ *        https://www.y-ic.es/datasheet/78/SMDSW.020-2OZ.pdf 
+ *        
+ *        Note for the actual reading data rate, it is determined by
+ *        the the gyroscope ODR is set as specified in ICM 20948 Datasheet
+ *        sec 11.1
+ * 
+ * @param new_mag_rate 
+ * @return esp_err_t 
+ */
+esp_err_t ICM20948IMU::setMagRate(ak09916_data_rate_t new_mag_rate) {
+    esp_err_t err = ESP_OK;
+    
+    // Put in shutdown mode
+    err = writeMagReg(AK09916_CNTL2, AK09916_MAG_DATARATE_SHUTDOWN);
+    if (err != ESP_OK)
+        return err;
+    
+    // Wait for at least 1 ms
+    vTaskDelay(1 / portTICK_RATE_MS);
+
+    // Set sampling rate
+    return writeMagReg(AK09916_CNTL2, new_mag_rate);
+}
+
 
 /**
  * @brief Get magnetometer id to test if comm is ready
@@ -521,7 +605,8 @@ esp_err_t ICM20948IMU::resetI2CMaster() {
 
 /**
  * @brief Write/read a single byte to a given register address 
- *        for an I2C slave device on the auxiliary I2C bus
+ *        for an I2C slave device on the auxiliary I2C bus using
+ *        the slv4 port on ICM20948
  * 
  * @param read 
  * @param slvAddr 

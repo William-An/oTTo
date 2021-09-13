@@ -64,6 +64,7 @@
 
 #define ICM20948_UT_PER_LSB 0.15 ///< mag data LSB value (fixed)
 
+// Magnetometer AK09916, https://www.y-ic.es/datasheet/78/SMDSW.020-2OZ.pdf
 #define AK09916_I2C_ADDR 0x0C
 #define AK09916_WIA2 0x01  ///< Magnetometer
 #define AK09916_ST1 0x10   ///< Magnetometer
@@ -158,8 +159,9 @@ class ICM20948IMU : public GenericIMU {
         esp_err_t writeAccelRange(icm20948_accel_range_t);
         esp_err_t writeMagRange(uint8_t);
 
-        esp_err_t setAccelRateDivisor(icm20948_accel_rate_t new_accel_divisor);
-        esp_err_t setGyroRateDivisor(icm20948_gyro_rate_t new_gyro_divisor);
+        esp_err_t setAccelRate(icm20948_accel_rate_t new_accel_divisor);
+        esp_err_t setGyroRate(icm20948_gyro_rate_t new_gyro_divisor);
+        esp_err_t setMagRate(ak09916_data_rate_t new_mag_rate);
         esp_err_t getMagId(uint8_t *dst);
 
         // Default i2c setting
@@ -187,6 +189,8 @@ class ICM20948IMU : public GenericIMU {
         // Future: Multiple bytes write support
         esp_err_t writeReg(uint8_t regAddr, uint8_t data);
         esp_err_t maskWriteReg(uint8_t regAddr, uint8_t regMask,uint8_t data, bool clearMasked);
+        esp_err_t readMagReg(uint8_t regAddr, uint8_t *data);
+        esp_err_t writeMagReg(uint8_t regAddr, uint8_t data);
 
         // Mock testing methods
         void updateMockAccel(Vector3_t);
@@ -201,6 +205,7 @@ class ICM20948IMU : public GenericIMU {
         esp_err_t setBank(uint8_t);
         esp_err_t reset();
         esp_err_t readRaw();
+        esp_err_t processRaw();
 
         // Onboard temp sensor reading
         float temp;
