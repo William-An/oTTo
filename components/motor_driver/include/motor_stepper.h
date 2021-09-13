@@ -14,14 +14,26 @@
 
 #include "motor_driver.h"
 #include <inttypes.h>
+#include "freertos/FreeRTOS.h"
+#include "driver/gpio.h"
 
 typedef struct Nema17Config_t {
     float fullStep;
     float wheelRadius;
-};
+} Nema17Config_t;
+
+typedef struct motorIOConfig_t {
+    int dir;
+    int step;
+    int ms1;
+    int ms2;
+    int ms3;
+    int en;
+} motorIOConfig_t;
 
 class A4988_Driver : public GenericMotorDiver {
     public:
+        A4988_Driver(float steps, bool pos);
         A4988_Driver();
 
         // Inherit methods
@@ -37,10 +49,12 @@ class A4988_Driver : public GenericMotorDiver {
         float getRestAngle();
         bool isContinuous();
         bool isHalted();
+        esp_err_t configIO(motorIOConfig_t motorIO);
 
     private:
         float steps = 1 / 16;
         bool pos = 1;
+        motorIOConfig_t motorIO;
 };
 
 #endif
