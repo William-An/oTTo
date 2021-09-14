@@ -15,6 +15,7 @@
 #include "motor_driver.h"
 #include <inttypes.h>
 #include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 #include "driver/gpio.h"
 #include "driver/mcpwm.h"
 #include "soc/mcpwm_periph.h"

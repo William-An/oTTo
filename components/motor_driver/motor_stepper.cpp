@@ -77,9 +77,21 @@ esp_err_t A4988_Driver::configIO(MotorIOConfig_t motorIO) {
     pwm_config.cmpr_b = 0.0;       
     pwm_config.counter_mode = MCPWM_UP_COUNTER;
     pwm_config.duty_mode = MCPWM_DUTY_MODE_0;
-    mcpwm_init(MCPWM_UNIT_0, MCPWM_TIMER_0, &pwm_config); 
 
-    mcpwm_stop(MCPWM_UNIT_0, MCPWM_TIMER_0);
+    mcpwm_unit_t unit;
+    mcpwm_timer_t timer;
+
+    if (pos == 1) {
+        unit = MCPWM_UNIT_1;
+        timer = MCPWM_TIMER_1;
+    } else {
+        unit = MCPWM_UNIT_0;
+        timer = MCPWM_TIMER_0;
+    }
+
+    mcpwm_init(unit, timer, &pwm_config); 
+
+    mcpwm_stop(unit, timer);
     return err;
 }
 
@@ -120,15 +132,26 @@ esp_err_t A4988_Driver::setContinuous(float omega) {
     float period = stepSize / omega;
     float freq = 1 / period;
 
-    err = mcpwm_set_frequency(MCPWM_UNIT_0, MCPWM_TIMER_0, freq);
+    mcpwm_unit_t unit;
+    mcpwm_timer_t timer;
+
+    if (pos == 1) {
+        unit = MCPWM_UNIT_1;
+        timer = MCPWM_TIMER_1;
+    } else {
+        unit = MCPWM_UNIT_0;
+        timer = MCPWM_TIMER_0;
+    }
+
+    err = mcpwm_set_frequency(unit, timer, freq);
     if (err != ESP_OK)
                 return err;
 
-    err = mcpwm_set_duty(MCPWM_UNIT_0, MCPWM_TIMER_0, MCPWM_OPR_A, 50);
+    err = mcpwm_set_duty(unit, timer, MCPWM_OPR_A, 50);
     if (err != ESP_OK)
                 return err;
 
-    err = mcpwm_start(MCPWM_UNIT_0, MCPWM_TIMER_0);
+    err = mcpwm_start(unit, timer);
     if (err != ESP_OK)
                 return err;
 
@@ -141,13 +164,39 @@ esp_err_t A4988_Driver::halt() {
     if (err != ESP_OK)
                 return err;
 
-    err = mcpwm_set_frequency(MCPWM_UNIT_0, MCPWM_TIMER_0, 50);
+    mcpwm_unit_t unit;
+    mcpwm_timer_t timer;
+    if (pos == 1) {
+        unit = MCPWM_UNIT_1;
+        timer = MCPWM_TIMER_1;
+    } else {
+        unit = MCPWM_UNIT_0;
+        timer = MCPWM_TIMER_0;
+    }
+
+    err = mcpwm_set_frequency(unit, timer, 50);
     if (err != ESP_OK)
                 return err;
 
-    err = mcpwm_set_duty(MCPWM_UNIT_0, MCPWM_TIMER_0, MCPWM_OPR_A, 0);
+    err = mcpwm_set_duty(unit, timer, MCPWM_OPR_A, 0);
     if (err != ESP_OK)
                 return err;
     
+    return err;
+}
+
+esp_err_t A4988_Driver::setFixed(float angle, float omega) {
+    esp_err_t err = ESP_OK;
+    float delay = angle / omega;
+    err = setContinuous(omega);
+    if (err != ESP_OK)
+                return err;
+
+    vTaskDelay(delay * 1000 / portTICK_RATE_MS);
+
+    err = halt();
+    if (err != ESP_OK)
+                return err;
+
     return err;
 }

@@ -26,7 +26,7 @@ class GenericMotorDiver {
 
         // Rotate for a fixed angle with velocity specified
         // angle in deg, omega in deg/s
-        // virtual esp_err_t setFixed(float angle, float omega);
+        virtual esp_err_t setFixed(float angle, float omega);
 
         // Halt the motor
         virtual esp_err_t halt();
