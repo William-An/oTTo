@@ -54,6 +54,9 @@ dkms.conf
 # vscode workspace
 *.code-workspace
 
+# vscode setting
+.vscode/
+
 # OS related file
 .DS_Store
 .DS_store
