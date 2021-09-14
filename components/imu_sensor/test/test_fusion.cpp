@@ -3,12 +3,11 @@
 * @file:      test_fusion.cpp
 * @author:    Weili An
 * @email:     an107@purdue.edu
-* @version:   v1.0.0
-* @date:      09/05/2021
-* @brief:     Sample test function for IMU fusion algorithm
+* @version:   v1.1.0
+* @date:      09/14/2021
+* @brief:     Sample program for ICM 20948 Fusion
 *
 ************************************************************/
-
 
 #include <stdio.h>
 #include <math.h>
@@ -16,19 +15,13 @@
 #include "freertos/task.h"
 #include "esp_log.h"
 #include "esp_system.h"
-#include "esp_spi_flash.h"
 #include "imu_sensor.h"
 #include "imu_icm_20948.h"
 
-extern "C" void test_fusion(void);
-
-float getRandom(uint64_t range, uint8_t decimal) {
-    uint64_t bound = range * pow10(decimal);
-    return (float)(((esp_random() % bound) - bound/2) / 100.0);
-}
-
 void test_fusion(void)
 {
+    printf("Hello world!\n");
+
     /* Print chip information */
     esp_chip_info_t chip_info;
     esp_chip_info(&chip_info);
@@ -39,48 +32,36 @@ void test_fusion(void)
 
     printf("silicon revision %d, ", chip_info.revision);
 
-    printf("%dMB %s flash\n", spi_flash_get_chip_size() / (1024 * 1024),
-            (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "embedded" : "external");
+    // Begin IMU Fusin test
+    printf("Begin ICM 20948 Fusion test");
+    
+    ICM20948IMU imu(100, ICM20948_I2CADDR_DEFAULT);
+    ESP_ERROR_CHECK(imu.begin());
 
-    ESP_LOGI("IMU", "Beginning testing imu fusion");
-    Vector3_t mock_accel;
-    Vector3_t mock_gyro;
-    Vector3_t mock_magnet;
-    const uint32_t mock_updateFreq = 10;
+    Vector3_t accelVec;
+    Vector3_t gyroVec;
+    Vector3_t magnetVec;
+    float temp;
+    AngleVector3 eulerAngles;
+    for(;;) {
+        // Perform a read
+        imu.updateAll();
 
-    // Initialize IMU
-    ICM20948IMU imu(mock_updateFreq);
+        // Get sensor measurement
+        // accelVec = imu.getAccel();
+        // gyroVec = imu.getGyro();
+        // magnetVec = imu.getMagnet();
+        // temp = imu.getTemp();
 
-    // Mock test loop
-    while (true) {
-        mock_accel = {
-            .x = (mock_accel.x + getRandom(1600, 2)),
-            .y = (mock_accel.y + getRandom(1600, 2)),
-            .z = (mock_accel.z + getRandom(1600, 2)),
-        };
+        // ESP_LOGI("[ICM]", "Accel: x = %.5f y = %.5f z = %.5f", accelVec.x, accelVec.y, accelVec.z);
+        // ESP_LOGI("[ICM]", "Gyro: x = %.5f y = %.5f z = %.5f", gyroVec.x, gyroVec.y, gyroVec.z);
+        // ESP_LOGI("[ICM]", "Mag: x = %.5f y = %.5f z = %.5f", magnetVec.x, magnetVec.y, magnetVec.z);
+        // ESP_LOGI("[ICM]", "temp: t = %.5f", temp);
 
-        mock_gyro = {
-            .x = (mock_gyro.x + getRandom(90, 2)),
-            .y = (mock_gyro.y + getRandom(90, 2)),
-            .z = (mock_gyro.z + getRandom(90, 2)),
-        };
-
-        mock_magnet = {
-            .x = (mock_magnet.x + getRandom(10, 2)),
-            .y = (mock_magnet.y + getRandom(10, 2)),
-            .z = (mock_magnet.z + getRandom(10, 2)),
-        };
-
-        // Fusion algorithm
-        int64_t prior = esp_timer_get_time();
         imu.runFusion();
-        int64_t after = esp_timer_get_time();
+        eulerAngles = imu.getEulerAngles();
+        ESP_LOGI("[ICM ARHS]", "r%.2frp%.2fpy%.2fy", eulerAngles.roll, eulerAngles.pitch, eulerAngles.yaw);
 
-        AngleVector3_t angles = imu.getEulerAngles();
-        ESP_LOGI("IMU", "Roll: %.2f Pitch: %.2f Yaw: %.2f Calc time (us): %lld",
-            angles.roll, angles.pitch, angles.yaw, (after - prior));
-        vTaskDelay((1000 / mock_updateFreq) / portTICK_PERIOD_MS);
+        vTaskDelay(10 / portTICK_RATE_MS);
     }
-
-    imu.runFusion();
 }
