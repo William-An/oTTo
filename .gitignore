@@ -65,6 +65,3 @@ sdkconfig
 # Logging
 *.log
 log*.txt
-
-# vscode
-.vscode/*
