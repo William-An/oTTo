@@ -12,27 +12,28 @@
 ************************************************************/
 
 #include <stdbool.h>
+#include "freertos/FreeRTOS.h"
 
 
 class GenericMotorDiver {
     public:
-        GenericMotorDiver();
-        virtual ~GenericMotorDiver();
+        // GenericMotorDiver();
+        ~GenericMotorDiver();
 
         // Motor control methods
         // Continuous rotation, omega in deg/s
-        virtual void setContinuous(float omega);
+        virtual esp_err_t setContinuous(float omega);
 
         // Rotate for a fixed angle with velocity specified
         // angle in deg, omega in deg/s
-        virtual void setFixed(float angle, float omega);
+        // virtual esp_err_t setFixed(float angle, float omega);
 
         // Halt the motor
-        virtual void halt();
+        virtual esp_err_t halt();
 
         // Getter for motor status
-        virtual float getPower() = 0;
-        virtual float getMaxOmega() = 0;
+        // virtual float getPower() = 0;
+        // virtual float getMaxOmega() = 0;
         float getOmega() {
             return omega;
         }

@@ -16,32 +16,42 @@
 #include <inttypes.h>
 #include "freertos/FreeRTOS.h"
 #include "driver/gpio.h"
+#include "driver/mcpwm.h"
+#include "soc/mcpwm_periph.h"
 
 typedef struct Nema17Config_t {
     float fullStep;
     float wheelRadius;
 } Nema17Config_t;
 
-typedef struct motorIOConfig_t {
-    int dir;
-    int step;
-    int ms1;
-    int ms2;
-    int ms3;
-    int en;
-} motorIOConfig_t;
+typedef struct MotorIOConfig_t {
+    gpio_num_t dir;
+    gpio_num_t step;
+    gpio_num_t ms1;
+    gpio_num_t ms2;
+    gpio_num_t ms3;
+    gpio_num_t en;
+} MotorIOConfig_t;
+
+typedef enum {
+    FULL_STEP = 1,
+    HALF_STEP = 2,
+    QUARTER_STEP = 4,
+    EIGHTH_STEP = 8,
+    SIXTEENTH_STEP = 16
+} Step_Size_t;
 
 class A4988_Driver : public GenericMotorDiver {
     public:
-        A4988_Driver(float steps, bool pos);
+        A4988_Driver(Step_Size_t steps, bool pos, Nema17Config_t nema17);
         A4988_Driver();
 
         // Inherit methods
         ~A4988_Driver(){};
-        void setContinuous(float omega);
-        void setFixed(float angle, float omega);
+        esp_err_t setContinuous(float omega);
+        esp_err_t setFixed(float angle, float omega);
         void setPos(bool pos);
-        void halt();
+        esp_err_t halt();
         float getPower();
         float getMaxOmega();
         float getOmega();
@@ -49,12 +59,13 @@ class A4988_Driver : public GenericMotorDiver {
         float getRestAngle();
         bool isContinuous();
         bool isHalted();
-        esp_err_t configIO(motorIOConfig_t motorIO);
+        esp_err_t configIO(MotorIOConfig_t motorIO);
 
     private:
-        float steps = 1 / 16;
+        Nema17Config_t nema17;
+        Step_Size_t steps = SIXTEENTH_STEP;
         bool pos = 1;
-        motorIOConfig_t motorIO;
+        MotorIOConfig_t motorIO;
 };
 
 #endif
