@@ -118,6 +118,7 @@ esp_err_t ICM20948IMU::begin() {
         .sda_pullup_en = GPIO_PULLUP_ENABLE,
         .scl_pullup_en = GPIO_PULLUP_ENABLE,
     };
+    default_conf.clk_flags = 0; // Avoid not initialized clk flags error
     default_conf.master.clk_speed = ICM20948_I2C_FREQ;
 
 

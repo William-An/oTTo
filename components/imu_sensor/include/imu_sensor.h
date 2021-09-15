@@ -82,9 +82,9 @@ class GenericIMU {
         // FusionAlgorithm_t currFusionAlgorithm;
 
         // Comment out unused fusion algorithm
-        //Adafruit_NXPSensorFusion filter; // slowest
+        Adafruit_NXPSensorFusion filter; // slowest
         //Adafruit_Madgwick filter;  // faster than NXP
-        Adafruit_Mahony filter;  // fastest/smalleset
+        // Adafruit_Mahony filter;  // fastest/smalleset
 
         // Unit in g
         Vector3_t accelVec;
