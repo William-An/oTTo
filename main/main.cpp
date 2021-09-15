@@ -51,6 +51,10 @@ void app_main(void)
     motor_pin.ms3 = GPIO_NUM_27;
     ESP_ERROR_CHECK(a4988.configIO(motor_pin));
     for (;;) {
-        a4988.setContinuous(720);
+        a4988.setContinuous(1440);
+        vTaskDelay(1 * 1000 / portTICK_RATE_MS);
+        a4988.setContinuous(-1440);
+        // a4988.halt();
+        vTaskDelay(1 * 1000 / portTICK_RATE_MS);
     }
 }

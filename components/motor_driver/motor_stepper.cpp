@@ -2,7 +2,7 @@
 #include "motor_driver.h"
 #include "motor_stepper.h"
 
-A4988_Driver::A4988_Driver(Step_Size_t steps, bool pos, Nema17Config_t nema17) {
+A4988_Driver::A4988_Driver(Step_Size_t steps, Position_t pos, Nema17Config_t nema17) {
     this->steps = steps;
     this->pos = pos;
     this->nema17 = nema17;
@@ -10,7 +10,7 @@ A4988_Driver::A4988_Driver(Step_Size_t steps, bool pos, Nema17Config_t nema17) {
 
 A4988_Driver::A4988_Driver() {
     this->steps = SIXTEENTH_STEP;
-    this->pos = 1;
+    this->pos = REFERECNCE;
     (this->nema17).fullStep = 1.8;
 }
 
@@ -67,7 +67,20 @@ esp_err_t A4988_Driver::configIO(MotorIOConfig_t motorIO) {
     if (err != ESP_OK)
         return err;
 
-    err = mcpwm_gpio_init(MCPWM_UNIT_0, MCPWM0A, motorIO.step);
+    mcpwm_unit_t unit;
+    mcpwm_timer_t timer;
+    mcpwm_io_signals_t port;
+    if (pos == REFERECNCE) {
+        unit = MCPWM_UNIT_1;
+        timer = MCPWM_TIMER_1;
+        port = MCPWM1A;
+    } else {
+        unit = MCPWM_UNIT_0;
+        timer = MCPWM_TIMER_0;
+        port = MCPWM0A;
+    }
+
+    err = mcpwm_gpio_init(unit, port, motorIO.step);
     if (err != ESP_OK)
         return err;
 
@@ -78,16 +91,6 @@ esp_err_t A4988_Driver::configIO(MotorIOConfig_t motorIO) {
     pwm_config.counter_mode = MCPWM_UP_COUNTER;
     pwm_config.duty_mode = MCPWM_DUTY_MODE_0;
 
-    mcpwm_unit_t unit;
-    mcpwm_timer_t timer;
-
-    if (pos == 1) {
-        unit = MCPWM_UNIT_1;
-        timer = MCPWM_TIMER_1;
-    } else {
-        unit = MCPWM_UNIT_0;
-        timer = MCPWM_TIMER_0;
-    }
 
     mcpwm_init(unit, timer, &pwm_config); 
 
@@ -104,7 +107,7 @@ esp_err_t A4988_Driver::setContinuous(float omega) {
 
     err = gpio_set_level(motorIO.en, 0);
 
-    if (this->pos == 1) {
+    if (this->pos == REFERECNCE) {
         if (omega > 0) {
             err = gpio_set_level(motorIO.dir, 1);
             if (err != ESP_OK)
@@ -129,13 +132,13 @@ esp_err_t A4988_Driver::setContinuous(float omega) {
     float stepSize;
     stepSize = nema17.fullStep / (float)steps;
 
-    float period = stepSize / omega;
+    float period = stepSize / abs(omega);
     float freq = 1 / period;
 
     mcpwm_unit_t unit;
     mcpwm_timer_t timer;
 
-    if (pos == 1) {
+    if (pos == REFERECNCE) {
         unit = MCPWM_UNIT_1;
         timer = MCPWM_TIMER_1;
     } else {
@@ -160,19 +163,21 @@ esp_err_t A4988_Driver::setContinuous(float omega) {
 
 esp_err_t A4988_Driver::halt() {
     esp_err_t err = ESP_OK;
-    err = mcpwm_stop(MCPWM_UNIT_0, MCPWM_TIMER_0);
-    if (err != ESP_OK)
-                return err;
+    
 
     mcpwm_unit_t unit;
     mcpwm_timer_t timer;
-    if (pos == 1) {
+    if (pos == REFERECNCE) {
         unit = MCPWM_UNIT_1;
         timer = MCPWM_TIMER_1;
     } else {
         unit = MCPWM_UNIT_0;
         timer = MCPWM_TIMER_0;
     }
+
+    err = mcpwm_stop(unit, timer);
+    if (err != ESP_OK)
+                return err;
 
     err = mcpwm_set_frequency(unit, timer, 50);
     if (err != ESP_OK)
@@ -187,7 +192,7 @@ esp_err_t A4988_Driver::halt() {
 
 esp_err_t A4988_Driver::setFixed(float angle, float omega) {
     esp_err_t err = ESP_OK;
-    float delay = angle / omega;
+    float delay = angle / abs(omega);
     err = setContinuous(omega);
     if (err != ESP_OK)
                 return err;

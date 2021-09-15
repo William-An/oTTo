@@ -42,16 +42,21 @@ typedef enum {
     SIXTEENTH_STEP = 16
 } Step_Size_t;
 
+typedef enum {
+    REFERECNCE = 1,
+    OPPOSITE = 0
+} Position_t;
+
 class A4988_Driver : public GenericMotorDiver {
     public:
-        A4988_Driver(Step_Size_t steps, bool pos, Nema17Config_t nema17);
+        A4988_Driver(Step_Size_t steps, Position_t pos, Nema17Config_t nema17);
         A4988_Driver();
 
         // Inherit methods
         ~A4988_Driver(){};
         esp_err_t setContinuous(float omega);
         esp_err_t setFixed(float angle, float omega);
-        void setPos(bool pos);
+        void setPos(Position_t pos);
         esp_err_t halt();
         float getPower();
         float getMaxOmega();
@@ -65,7 +70,7 @@ class A4988_Driver : public GenericMotorDiver {
     private:
         Nema17Config_t nema17;
         Step_Size_t steps = SIXTEENTH_STEP;
-        bool pos = 1;
+        Position_t pos = REFERECNCE;
         MotorIOConfig_t motorIO;
 };
 

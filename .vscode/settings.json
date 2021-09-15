@@ -32,5 +32,4 @@
         "streambuf": "cpp",
         "*.inc": "cpp"
     },
-    "idf.port": "/dev/cu.usbserial-0001"
 }
