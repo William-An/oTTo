@@ -21,9 +21,13 @@
 #include "test_imu.h"
 
 extern "C" void app_main(void);
+extern esp_err_t i2c_init(uint8_t i2c_portNum);
 
 void app_main(void)
 {
+    i2c_port_t port = 0;
+    ESP_LOGI("Main", "Init I2C port %d", port);
+    i2c_init(port);
     // Test IMU Fusion
-    test_fusion();
+    test_fusion(port);
 }

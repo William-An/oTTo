@@ -42,25 +42,13 @@ ICM20948IMU::ICM20948IMU(uint32_t freq, uint8_t addr) : GenericIMU(freq) {
  * @brief Begin I2C transcation with ICM 20948 and perform basic setup
  *        including wake it up and set initial sensor range
  * 
- * @param i2cPortNum    : Which i2C port to use
- * @param i2cConf       : I2C driver configuration
+ * @param i2cPortNum    : Which i2C port to use, must be properly
+ *                        configured and have driver installed
  * @return esp_err_t
  */
-esp_err_t ICM20948IMU::begin(i2c_port_t i2cPortNum, i2c_config_t i2cConf) {
+esp_err_t ICM20948IMU::begin(i2c_port_t i2cPortNum) {
     esp_err_t err = ESP_OK;
     uint8_t buf = 0;
-
-    // Configure the I2C port
-    this->conf = i2cConf;
-    this->portNum = i2cPortNum;
-    err = i2c_param_config(i2cPortNum, &(this->conf));
-    if (err != ESP_OK)
-        return err;
-    
-    // Install I2C Driver
-    err = i2c_driver_install(portNum, conf.mode, I2C_MASTER_RX_BUF_DISABLE, I2C_MASTER_TX_BUF_DISABLE, 0);
-    if (err != ESP_OK)
-        return err;
 
     // WHO AM I
     err = readReg(ICM20X_B0_WHOAMI, &buf, 1);
@@ -102,27 +90,6 @@ esp_err_t ICM20948IMU::begin(i2c_port_t i2cPortNum, i2c_config_t i2cConf) {
         return err;
 
     return err;
-}
-
-/**
- * @brief Wrapper for default begin process
- * 
- * @return esp_err_t 
- */
-esp_err_t ICM20948IMU::begin() {
-    // Default ICM 20948 I2C config
-    i2c_config_t default_conf = {
-        .mode = I2C_MODE_MASTER,
-        .sda_io_num = ICM20948_I2C_SDA_PIN,
-        .scl_io_num = ICM20948_I2C_SCL_PIN,
-        .sda_pullup_en = GPIO_PULLUP_ENABLE,
-        .scl_pullup_en = GPIO_PULLUP_ENABLE,
-    };
-    default_conf.clk_flags = 0; // Avoid not initialized clk flags error
-    default_conf.master.clk_speed = ICM20948_I2C_FREQ;
-
-
-    return begin(ICM20948_I2C_PORT_NUM, default_conf);
 }
 
 /**

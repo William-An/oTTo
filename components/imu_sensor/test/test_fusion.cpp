@@ -18,7 +18,7 @@
 #include "imu_sensor.h"
 #include "imu_icm_20948.h"
 
-void test_fusion(void)
+void test_fusion(i2c_port_t portNum)
 {
     printf("Hello world!\n");
 
@@ -36,7 +36,7 @@ void test_fusion(void)
     printf("Begin ICM 20948 Fusion test");
     
     ICM20948IMU imu(100, ICM20948_I2CADDR_DEFAULT);
-    ESP_ERROR_CHECK(imu.begin());
+    ESP_ERROR_CHECK(imu.begin(portNum));
 
     Vector3_t accelVec;
     Vector3_t gyroVec;
