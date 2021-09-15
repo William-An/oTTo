@@ -20,11 +20,13 @@
 #include "driver/mcpwm.h"
 #include "soc/mcpwm_periph.h"
 
+// motor info and others
 typedef struct Nema17Config_t {
     float fullStep;
     float wheelRadius;
 } Nema17Config_t;
 
+// pin number on controller to the A4988 control pins
 typedef struct MotorIOConfig_t {
     gpio_num_t dir;
     gpio_num_t step;
@@ -34,6 +36,7 @@ typedef struct MotorIOConfig_t {
     gpio_num_t en;
 } MotorIOConfig_t;
 
+// step size that 4988 support
 typedef enum {
     FULL_STEP = 1,
     HALF_STEP = 2,
@@ -42,6 +45,7 @@ typedef enum {
     SIXTEENTH_STEP = 16
 } Step_Size_t;
 
+// position of the motor
 typedef enum {
     REFERECNCE = 1,
     OPPOSITE = 0

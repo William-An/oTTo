@@ -2,11 +2,24 @@
 #include "motor_driver.h"
 #include "motor_stepper.h"
 
+/**
+ * @brief Construct a new A4988_Driver object
+ * 
+ * @param steps: full step of the stepper motor, nema17 usually have 1.8 degree as one full step
+ * @param pos: if the current motor is the reference motor; the system can only have one reference, the other is opposite
+ * @param nema17: motor and other info; full step of the stepper motor, nema17 usually have 1.8 degree as one full step
+ */
 A4988_Driver::A4988_Driver(Step_Size_t steps, Position_t pos, Nema17Config_t nema17) {
     this->steps = steps;
     this->pos = pos;
     this->nema17 = nema17;
 }
+
+/**
+ * @brief Construct a new default A4988_Driver object
+ * 
+ */
+
 
 A4988_Driver::A4988_Driver() {
     this->steps = SIXTEENTH_STEP;
@@ -14,9 +27,21 @@ A4988_Driver::A4988_Driver() {
     (this->nema17).fullStep = 1.8;
 }
 
+/**
+ * @brief configure the GPIOs used for A4988
+ * 
+ * @param motorIO motorIO has six fields: 
+ *                step: driving signal; each pulse is one step
+ *                dir: direction signal; 1 is CW, 0 is CCW
+ *                en: active low enable signal
+ *                ms1-3: step size signal
+ */
+
 esp_err_t A4988_Driver::configIO(MotorIOConfig_t motorIO) {
     esp_err_t err = ESP_OK;
     this->motorIO = motorIO;
+
+    // enable the desired GPIOs
     int normalOutputSel = (1ULL << motorIO.dir) | (1ULL << motorIO.en) | 
                     (1ULL << motorIO.ms1) | (1ULL << motorIO.ms2)  | (1ULL << motorIO.ms3);
     
@@ -31,7 +56,7 @@ esp_err_t A4988_Driver::configIO(MotorIOConfig_t motorIO) {
         return err;
 
 
-
+    // set output to be default value
     err = gpio_set_level(motorIO.en, 1);  // high is disable
     if (err != ESP_OK)
         return err;
@@ -67,6 +92,7 @@ esp_err_t A4988_Driver::configIO(MotorIOConfig_t motorIO) {
     if (err != ESP_OK)
         return err;
 
+    // set up step pin to be pwm output
     mcpwm_unit_t unit;
     mcpwm_timer_t timer;
     mcpwm_io_signals_t port;
@@ -84,6 +110,7 @@ esp_err_t A4988_Driver::configIO(MotorIOConfig_t motorIO) {
     if (err != ESP_OK)
         return err;
 
+    // default value for pwm
     mcpwm_config_t pwm_config;
     pwm_config.frequency = 50;
     pwm_config.cmpr_a = 0.0;       
@@ -98,6 +125,11 @@ esp_err_t A4988_Driver::configIO(MotorIOConfig_t motorIO) {
     return err;
 }
 
+/**
+ * @brief set the motor to rotate at desire angular velocity indefinitely until halt() is inserted
+ * 
+ * @param omega the angular velocity
+ */
 esp_err_t A4988_Driver::setContinuous(float omega) {
     esp_err_t err = ESP_OK;
     if (omega == 0) {
@@ -107,6 +139,7 @@ esp_err_t A4988_Driver::setContinuous(float omega) {
 
     err = gpio_set_level(motorIO.en, 0);
 
+    // determine the direction according to omega and motor postion
     if (this->pos == REFERECNCE) {
         if (omega > 0) {
             err = gpio_set_level(motorIO.dir, 1);
@@ -129,12 +162,14 @@ esp_err_t A4988_Driver::setContinuous(float omega) {
         }
     }
 
+    // calculate pwm frequency
     float stepSize;
     stepSize = nema17.fullStep / (float)steps;
 
     float period = stepSize / abs(omega);
     float freq = 1 / period;
 
+    // select unit and timer to be used for pwm
     mcpwm_unit_t unit;
     mcpwm_timer_t timer;
 
@@ -146,6 +181,7 @@ esp_err_t A4988_Driver::setContinuous(float omega) {
         timer = MCPWM_TIMER_0;
     }
 
+    // start pwm for motor rotation
     err = mcpwm_set_frequency(unit, timer, freq);
     if (err != ESP_OK)
                 return err;
@@ -160,6 +196,11 @@ esp_err_t A4988_Driver::setContinuous(float omega) {
 
     return err;
 }
+
+/**
+ * @brief stop the motor
+ * 
+ */
 
 esp_err_t A4988_Driver::halt() {
     esp_err_t err = ESP_OK;
@@ -189,6 +230,13 @@ esp_err_t A4988_Driver::halt() {
     
     return err;
 }
+
+/**
+ * @brief set the motor to rotate at desire angular velocity for some angle
+ * 
+ * @param omega the angular velocity
+ * @param angle total angle to be rotated
+ */
 
 esp_err_t A4988_Driver::setFixed(float angle, float omega) {
     esp_err_t err = ESP_OK;
