@@ -49,7 +49,7 @@ void app_main(void)
 
     MotorIOConfig_t motor_pin;
     motor_pin.step = GPIO_NUM_18;
-    motor_pin.en = GPIO_NUM_2;
+    motor_pin.en = GPIO_NUM_3;
     motor_pin.dir = GPIO_NUM_4;
     motor_pin.ms1 = GPIO_NUM_25;
     motor_pin.ms2 = GPIO_NUM_26;
@@ -58,18 +58,18 @@ void app_main(void)
 
     motor_pin.step = GPIO_NUM_33;
     motor_pin.dir = GPIO_NUM_26;
-    motor_pin.en = GPIO_NUM_2;
+    motor_pin.en = GPIO_NUM_3;
     motor_pin.ms1 = GPIO_NUM_12;
     motor_pin.ms2 = GPIO_NUM_13;
     motor_pin.ms3 = GPIO_NUM_14;
     ESP_ERROR_CHECK(ops_wheel.configIO(motor_pin));
     for (;;) {
-        // ref_wheel.setContinuous(720);
+        ref_wheel.setContinuous(720);
         ops_wheel.setContinuous(720);
         vTaskDelay(1 * 1000 / portTICK_RATE_MS);
-        // ref_wheel.setContinuous(-720);
-        // ops_wheel.setContinuous(-720);
-        ops_wheel.halt();
+        ref_wheel.setContinuous(-720);
+        ops_wheel.setContinuous(-720);
+        // ops_wheel.halt();
         vTaskDelay(1 * 1000 / portTICK_RATE_MS);
     }
 }
