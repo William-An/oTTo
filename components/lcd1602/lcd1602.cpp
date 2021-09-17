@@ -136,57 +136,154 @@ esp_err_t LCD1602::reset() {
 }
 
 esp_err_t LCD1602::clear() {
+    esp_err_t err = ESP_FAIL;
+
+    err = write_command(COMMAND_CLEAR_DISPLAY);
+    if (err == ESP_OK)
+    {
+        vTaskDelay(1000 / portTICK_RATE_MS);
+    }
+
     return ESP_OK;
 }
 
+
 esp_err_t LCD1602::enable_display(bool en) {
+    esp_err_t err = ESP_FAIL;
+
+    err = write_command(en?COMMAND_DISPLAY_CONTROL | FLAG_DISPLAY_CONTROL_DISPLAY_ON:COMMAND_DISPLAY_CONTROL |~FLAG_DISPLAY_CONTROL_DISPLAY_ON );
+    if (err == ESP_OK)
+    {
+        vTaskDelay(1000 / portTICK_RATE_MS);
+    }
+    }
     return ESP_OK;
 }
 
 esp_err_t LCD1602::enable_cursor(bool en) {
+    esp_err_t err = ESP_FAIL;
+
+    err = write_command(en?COMMAND_DISPLAY_CONTROL | FLAG_DISPLAY_CONTROL_CURSOR_ON:COMMAND_DISPLAY_CONTROL | ~FLAG_DISPLAY_CONTROL_CURSOR_ON);
+    if (err == ESP_OK)
+    {
+        vTaskDelay(1000 / portTICK_RATE_MS);
+    }
+     
+
     return ESP_OK;
 }
 
 esp_err_t LCD1602::enable_blink(bool en) {
+    esp_err_t err = ESP_FAIL;
+//??
+    err = write_command(en?COMMAND_DISPLAY_CONTROL | FLAG_DISPLAY_CONTROL_BLINK_ON:COMMAND_DISPLAY_CONTROL | ~FLAG_DISPLAY_CONTROL_BLINK_ON);
+    if (err == ESP_OK)
+    {
+        vTaskDelay(1000 / portTICK_RATE_MS);
+    }
+     
+
     return ESP_OK;
 }
 
 
 // Cursor control
 esp_err_t LCD1602::home() {
+    esp_err_t err = ESP_FAIL;
+    
+    err = write_command(COMMAND_RETURN_HOME);
+    if (err == ESP_OK)
+    {
+        ets_delay_us(DELAY_RETURN_HOME);
+    }
     return ESP_OK;
 }
 
 esp_err_t LCD1602::move_cursor(uint8_t col, uint8_t row) {
+    esp_err_t err = ESP_FAIL;
+    const int row_offsets[] = { 0x00, 0x40, 0x14, 0x54 };
+    if (row > i2c_lcd1602_info->num_rows)
+    {
+        row = i2c_lcd1602_info->num_rows - 1;
+    }
+    if (col > i2c_lcd1602_info->num_columns)
+    {
+        col = i2c_lcd1602_info->num_columns - 1;
+    }
+    err = write_command(COMMAND_SET_DDRAM_ADDR | (col + row_offsets[row]));
+    
     return ESP_OK;
 }
 
 // Direction control
 esp_err_t LCD1602::set_left_to_right(bool en) {
+    esp_err_t err = ESP_FAIL;
+
+    err = write_command(COMMAND_ENTRY_MODE_SET | FLAG_ENTRY_MODE_SET_ENTRY_INCREMENT);
+
     return ESP_OK;
 }
 
 esp_err_t LCD1602::enable_auto_scroll(bool en) {
+    esp_err_t err = ESP_FAIL;   
+    
+    err = write_command(en?COMMAND_ENTRY_MODE_SET | FLAG_ENTRY_MODE_SET_ENTRY_SHIFT_ON: COMMAND_ENTRY_MODE_SET | ~FLAG_ENTRY_MODE_SET_ENTRY_SHIFT_ON);
+
     return ESP_OK;
 }
 
 esp_err_t LCD1602::set_scroll(LCD1602_dir_t dir) {
+    esp_err_t err = ESP_FAIL;
+    if (dir == LEFT){
+        err = write_command(COMMAND_SHIFT | FLAG_SHIFT_MOVE_DISPLAY | FLAG_SHIFT_MOVE_LEFT);
+    }
+    if(dir == RIGHT){
+        err = write_command(COMMAND_SHIFT | FLAG_SHIFT_MOVE_DISPLAY | FLAG_SHIFT_MOVE_RIGHT);
+    }
+
+
+
     return ESP_OK;
 }
 
 esp_err_t LCD1602::move_cursor(LCD1602_dir_t dir) {
+    esp_err_t err = ESP_FAIL;
+    if (dir == LEFT){
+        err = write_command(COMMAND_SHIFT | FLAG_SHIFT_MOVE_CURSOR | FLAG_SHIFT_MOVE_RIGHT);
+    }
+    if(dir == RIGHT){
+        err = write_command(COMMAND_SHIFT | FLAG_SHIFT_MOVE_CURSOR | FLAG_SHIFT_MOVE_LEFT);
+    }
+
     return ESP_OK;
 }
 
 esp_err_t LCD1602::define_char(i2c_lcd1602_custom_index_t index, const uint8_t pixelmap[]) {
+    
+    esp_err_t err = ESP_FAIL;
+    index &= 0x07;  // only the first 8 indexes can be used for custom characters
+    err = write_command(COMMAND_SET_CGRAM_ADDR | (index << 3));
+    for (int i = 0; err == ESP_OK && i < 8; ++i)
+    {
+        err = write_data(pixelmap[i]);
+    }
     return ESP_OK;
 }
 
 esp_err_t LCD1602::write_char(uint8_t chr) {
+    esp_err_t err = ESP_FAIL;
+    err = write_data(chr);
+
     return ESP_OK;
 }
 
 esp_err_t LCD1602::write_string(const char *str) {
+
+    err = ESP_OK;
+    for (int i = 0; err == ESP_OK && string[i]; ++i)
+    {
+        err = write_data(string[i]);
+    }
     return ESP_OK;
 }
 
