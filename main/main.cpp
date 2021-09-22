@@ -13,6 +13,7 @@
 #include <math.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "esp_app_trace.h"
 #include "esp_log.h"
 #include "esp_system.h"
 #include "esp_spi_flash.h"
@@ -26,6 +27,10 @@ static QueueHandle_t imuQueue;
 
 void app_main(void)
 {
+    // Redirect trace to JTAG app trace
+    // Has some limitations, see https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/app_trace.html#limitations
+    // esp_log_set_vprintf(esp_apptrace_vprintf);
+
     // Init console output
     // ASCII Art from https://patorjk.com/software/taag/#p=display&f=Isometric1&t=oTTo%0ArOBOT
     // Shows "OTTO ROBOT"
