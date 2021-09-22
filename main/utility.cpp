@@ -13,6 +13,7 @@
 #include "driver/i2c.h"
 #include "esp_err.h"
 #include "esp_log.h"
+#include "otto.h"
 
 // I2C Pin def
 #define OTTO_I2C_SDA_PIN 27
@@ -22,9 +23,6 @@
 // I2C Conf
 #define I2C_MASTER_TX_BUF_DISABLE   0                          /*!< I2C master doesn't need buffer */
 #define I2C_MASTER_RX_BUF_DISABLE   0                          /*!< I2C master doesn't need buffer */
-
-// Use port 0 of I2C
-#define OTTO_I2C_PORT_NUM 0
 
 /**
  * @brief Init I2C port
@@ -48,7 +46,10 @@ esp_err_t i2c_init(uint8_t i2c_portNum) {
     ESP_ERROR_CHECK(i2c_param_config(i2c_portNum, &default_conf));
 
     // Install driver
-    ESP_ERROR_CHECK(i2c_driver_install(i2c_portNum, default_conf.mode, I2C_MASTER_RX_BUF_DISABLE, I2C_MASTER_TX_BUF_DISABLE, 0));
+    ESP_ERROR_CHECK(
+        i2c_driver_install(
+            i2c_portNum, default_conf.mode, 
+            I2C_MASTER_RX_BUF_DISABLE, I2C_MASTER_TX_BUF_DISABLE, 0));
 
     return ESP_OK;
 }
