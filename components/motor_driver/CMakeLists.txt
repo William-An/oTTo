@@ -1,2 +1,2 @@
-idf_component_register(SRCS "motor_stepper.cpp" "motor_driver.cpp"
-                    INCLUDE_DIRS "include")
+idf_component_register(SRC_DIRS "." "test"
+                    INCLUDE_DIRS "include" "test")
