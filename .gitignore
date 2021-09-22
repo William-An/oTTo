@@ -54,6 +54,9 @@ dkms.conf
 # vscode workspace
 *.code-workspace
 
+# vscode setting
+.vscode/
+
 # OS related file
 .DS_Store
 .DS_store
@@ -61,7 +64,11 @@ dkms.conf
 # ESP32 IDF
 build/
 sdkconfig
+sdkconfig.old
 
 # Logging
 *.log
 log*.txt
+
+# Tracing
+trace/

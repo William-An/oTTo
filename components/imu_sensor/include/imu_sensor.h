@@ -14,16 +14,19 @@
 
 #include "Adafruit_AHRS_FusionInterface.h"
 #include "Adafruit_AHRS.h"
+#include "esp_err.h"
 #include <stdint.h>
+#include <math.h>
 
-typedef struct Vector3_t
+
+typedef struct Vector3
 {
     float x;
     float y;
     float z;
 } Vector3_t;
 
-typedef struct AngleVector3_t
+typedef struct AngleVector3
 {
     float roll;
     float pitch;
@@ -44,15 +47,8 @@ class GenericIMU {
         // Sensor calibration method
         virtual void calibrate() = 0;
 
-        // Sensor data update methods, should set the class members for each sensor
-        virtual void updateAccel() = 0;
-        virtual void updateGyro() = 0;
-        virtual void updateMagnet() = 0;
-        void updateAll() {
-            updateAccel();
-            updateGyro();
-            updateMagnet();
-        }
+        // Sensor data update method
+        virtual esp_err_t updateAll() = 0;
 
         // Run selected fusion algorithm to update euler angles
         void runFusion();
@@ -86,9 +82,9 @@ class GenericIMU {
         // FusionAlgorithm_t currFusionAlgorithm;
 
         // Comment out unused fusion algorithm
-        //Adafruit_NXPSensorFusion filter; // slowest
+        Adafruit_NXPSensorFusion filter; // slowest
         //Adafruit_Madgwick filter;  // faster than NXP
-        Adafruit_Mahony filter;  // fastest/smalleset
+        // Adafruit_Mahony filter;  // fastest/smalleset
 
         // Unit in g
         Vector3_t accelVec;
@@ -101,7 +97,9 @@ class GenericIMU {
 
         // Sensor update frequency, in Hz
         uint32_t updateFreq;
-    private:
+    protected:
+        // Private as we let the base fusion algorithm
+        // handle this
         AngleVector3_t eulerAngles;
 };
 
