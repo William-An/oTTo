@@ -39,10 +39,10 @@
  * Only the top four bits are connected to the controller's data lines. The lower
  * four bits are used as control lines:
  *
- *   - B7: data bit 3
- *   - B6: data bit 2
- *   - B5: data bit 1
- *   - B4: data bit 0
+ *   - B7: data bit 7
+ *   - B6: data bit 6
+ *   - B5: data bit 5
+ *   - B4: data bit 4
  *   - B3: backlight (BL): off = 0, on = 1
  *   - B2: enable (EN): change from 1 to 0 to clock data into controller
  *   - B1: read/write (RW): write = 0, read = 1
@@ -110,29 +110,180 @@ esp_err_t LCD1602::begin(i2c_port_t portNum) {
     err = writeReg(MCP23008_REG_IODIR, 0);
     if (err != ESP_OK)
         return err;
-    
-    // Set default outputs to all 0s
-    err = writeReg(MCP23008_REG_GPIO, 0);
+
+    // Set MCP GPIO to output mode, default is 0xFF
+    err = writeReg(MCP23008_REG_IPOL, 0);
     if (err != ESP_OK)
         return err;
 
-    // Wait at least 40ms after power rises above 2.7V before sending commands.
-    vTaskDelay(DELAY_POWER_ON / portTICK_RATE_MS);
+    //initialization of lcd display
+    //wait for stabilization 500ms
+    // vTaskDelay(500 / portTICK_RATE_MS);
+    // //fuction set
+    // err = writeReg(0b0010,0);
+    // if (err != ESP_OK)
+    //     return err;
+    // //check busy flag
+    // // !use delay instead of checking
+    // vTaskDelay(500 / portTICK_RATE_MS);
+    // //Display on/off control
+    // err = writeReg(0b0000,0);
+    // if (err != ESP_OK)
+    //     return err;
+    // err = writeReg(0b)
+    // //check busy flag
+    // // !use delay instead of checking
+    // vTaskDelay(500 / portTICK_RATE_MS);
+    // //Display clear
+    // err = writeReg(0b0000,0);
+    // if (err != ESP_OK)
+    //     return err;
+    // //Return home
+    // err = writeReg();
+
+    ESP_LOGI("Begin", "Set all to 0s");
+
+    // Set default outputs to all 0s
+    err = writeReg(MCP23008_REG_GPIO, 0x00);
+    if (err != ESP_OK)
+        return err;
+    
+    ets_delay_us(20*1000);
+    write_top_nibble(0b0011 << 4);
+    ets_delay_us(5*1000);
+    write_top_nibble(0b0011 << 4);
+    ets_delay_us(150);
+    write_top_nibble(0b0011 << 4);
+    
+    write_top_nibble(0b0010 << 4);
+    write_top_nibble(0b0010 << 4);
+    write_top_nibble(0b0001 << 4);
+    write_top_nibble(0b0000 << 4);
+    write_top_nibble(0b1000 << 4);
+    write_top_nibble(0b0000 << 4);
+    write_top_nibble(0b0001 << 4);
+    write_top_nibble(0b0000 << 4);
+    write_top_nibble(0b0111 << 4);
+
+    // ESP_LOGI("Begin", "Set all to 0 in 3s");
+    // vTaskDelay(3000 / portTICK_RATE_MS);
+    
+    // // Set default outputs to all 0s
+    // err = writeReg(MCP23008_REG_GPIO, 0);
+    // if (err != ESP_OK)
+    //     return err;
+
+    // ESP_LOGI("Begin", "Set all to 1 in 3s");
+    vTaskDelay(300000 / portTICK_RATE_MS);
+
+    // // Set default outputs to all 0s
+    // err = writeReg(MCP23008_REG_GPIO, 0xff);
+    // if (err != ESP_OK)
+    //     return err;
+
+    // // Wait at least 40ms after power rises above 2.7V before sending commands.
+    // // vTaskDelay(DELAY_POWER_ON / portTICK_RATE_MS);
+    // vTaskDelay(5000 / portTICK_RATE_MS);
 
     // Reset device
+    ESP_LOGI("Begin", "Reseting chip");
     return reset();
 }
 
 // Display control
 esp_err_t LCD1602::reset() {
     esp_err_t err = ESP_OK;
+    esp_err_t first_err = ESP_OK;
+    esp_err_t last_err = ESP_OK;
+
     
-    // Set default outputs to all 0s
+    // Set default outputs to all 0s except enable
     err = writeReg(MCP23008_REG_GPIO, 0);
     if (err != ESP_OK)
         return err;
     
     vTaskDelay(1000 / portTICK_RATE_MS);
+    
+    // Sync function for 4bit interface
+    ESP_LOGI(__func__, "Sync");
+    vTaskDelay(500 / portTICK_RATE_MS);
+    write_top_nibble(0);
+    vTaskDelay(500 / portTICK_RATE_MS);
+    write_top_nibble(0);
+    vTaskDelay(500 / portTICK_RATE_MS);
+    write_top_nibble(0);
+    vTaskDelay(500 / portTICK_RATE_MS);
+    write_top_nibble(0);
+    vTaskDelay(500 / portTICK_RATE_MS);
+    write_top_nibble(0);
+    vTaskDelay(500 / portTICK_RATE_MS);
+
+    // Select 4-bit mode
+    ESP_LOGI(__func__, "Set 4 bit");
+    write_top_nibble(0x2 << 4);
+    vTaskDelay(10 / portTICK_RATE_MS);
+    write_top_nibble(0x2 << 4);
+    vTaskDelay(10 / portTICK_RATE_MS);
+    write_top_nibble(0b1000 << 4);
+    vTaskDelay(10 / portTICK_RATE_MS);
+    vTaskDelay(100000 / portTICK_RATE_MS);
+
+    // Delay to simulate checking busy flag 
+    vTaskDelay(DELAY_INIT_1 / portTICK_RATE_MS);
+
+    // Display on/off control
+    ESP_LOGI(__func__, "Display off");
+    write_top_nibble(0x0 << 4);
+    vTaskDelay(10 / portTICK_RATE_MS);
+    // Enable cursor and all stuffs 
+    write_top_nibble(0b1000 << 4);
+
+    // Delay to simulate checking busy flag 
+    vTaskDelay(DELAY_INIT_1 / portTICK_RATE_MS);
+
+    // Display clear 
+    ESP_LOGI(__func__, "Clear");
+    write_top_nibble(0x0 << 4);
+    write_top_nibble(0x1 << 4);
+
+    // Delay to simulate checking busy flag 
+    vTaskDelay(DELAY_INIT_1 / portTICK_RATE_MS);
+
+    // Home 
+    ESP_LOGI(__func__, "Home");
+    write_top_nibble(0x0 << 4);
+    write_top_nibble(0x2 << 4);
+
+    // Delay to simulate checking busy flag 
+    vTaskDelay(DELAY_INIT_1 / portTICK_RATE_MS);
+
+    // Entry mode set
+    ESP_LOGI(__func__, "Entry mode");
+    write_top_nibble(0x0 << 4);
+    write_top_nibble(0x06 << 4);
+
+    // Delay to simulate checking busy flag 
+    vTaskDelay(DELAY_INIT_1 / portTICK_RATE_MS);
+
+    // Enable cursor and blink
+    ESP_LOGI(__func__, "Turns on ");
+    write_top_nibble(0x0 << 4);
+    write_top_nibble(0xC << 4);
+
+    // Delay to simulate checking busy flag 
+    vTaskDelay(DELAY_INIT_1 / portTICK_RATE_MS);
+
+    // Write an A
+    ESP_LOGI(__func__, "Write something");
+    write_top_nibble(0b0100 << 4 | 0b01);
+    write_top_nibble(0b0001 << 4 | 0b01);
+
+    // Delay to simulate checking busy flag 
+    vTaskDelay(DELAY_INIT_1 / portTICK_RATE_MS);
+
+    ESP_LOGI(__func__, "Finish reseting");
+    for(;;);
+    return err;
 }
 
 esp_err_t LCD1602::clear() {
@@ -156,7 +307,7 @@ esp_err_t LCD1602::enable_display(bool en) {
     {
         vTaskDelay(1000 / portTICK_RATE_MS);
     }
-    }
+    
     return ESP_OK;
 }
 
@@ -202,13 +353,13 @@ esp_err_t LCD1602::home() {
 esp_err_t LCD1602::move_cursor(uint8_t col, uint8_t row) {
     esp_err_t err = ESP_FAIL;
     const int row_offsets[] = { 0x00, 0x40, 0x14, 0x54 };
-    if (row > i2c_lcd1602_info->num_rows)
+    if (row > 2)
     {
-        row = i2c_lcd1602_info->num_rows - 1;
+        row = 2;
     }
-    if (col > i2c_lcd1602_info->num_columns)
+    if (col > 16)
     {
-        col = i2c_lcd1602_info->num_columns - 1;
+        col = 16;
     }
     err = write_command(COMMAND_SET_DDRAM_ADDR | (col + row_offsets[row]));
     
@@ -261,7 +412,7 @@ esp_err_t LCD1602::move_cursor(LCD1602_dir_t dir) {
 esp_err_t LCD1602::define_char(i2c_lcd1602_custom_index_t index, const uint8_t pixelmap[]) {
     
     esp_err_t err = ESP_FAIL;
-    index &= 0x07;  // only the first 8 indexes can be used for custom characters
+    index = (i2c_lcd1602_custom_index_t)((int)index & 0x07);  // only the first 8 indexes can be used for custom characters
     err = write_command(COMMAND_SET_CGRAM_ADDR | (index << 3));
     for (int i = 0; err == ESP_OK && i < 8; ++i)
     {
@@ -279,10 +430,10 @@ esp_err_t LCD1602::write_char(uint8_t chr) {
 
 esp_err_t LCD1602::write_string(const char *str) {
 
-    err = ESP_OK;
-    for (int i = 0; err == ESP_OK && string[i]; ++i)
+    esp_err_t err = ESP_OK;
+    for (int i = 0; err == ESP_OK && str[i]; ++i)
     {
-        err = write_data(string[i]);
+        err = write_data(str[i]);
     }
     return ESP_OK;
 }
@@ -406,13 +557,16 @@ esp_err_t LCD1602::maskWriteReg(uint8_t regAddr, uint8_t regMask,uint8_t data, b
  * @return esp_err_t 
  */
 esp_err_t LCD1602::strobe_enable(uint8_t data) {
-    esp_err_t err1 = writeReg(MCP23008_REG_GPIO, data | FLAG_ENABLE);
-    vTaskDelay(DELAY_ENABLE_PULSE_WIDTH / portTICK_RATE_MS);
+    esp_err_t err1 = writeReg(MCP23008_REG_GPIO, data & ~FLAG_ENABLE);
+    ets_delay_us(1);
     
-    esp_err_t err2 = writeReg(MCP23008_REG_GPIO, data & ~FLAG_ENABLE);
-    vTaskDelay(DELAY_ENABLE_PULSE_SETTLE / portTICK_RATE_MS);
+    esp_err_t err2 = writeReg(MCP23008_REG_GPIO, data | FLAG_ENABLE);
+    ets_delay_us(1);
 
-    return err1 == ESP_OK ? err2 : err1;
+    esp_err_t err3 = writeReg(MCP23008_REG_GPIO, data & ~FLAG_ENABLE);
+    ets_delay_us(1);
+
+    return err1 == ESP_OK ? (ESP_OK ? err2 : err1):err3;
 }
 
 /**
