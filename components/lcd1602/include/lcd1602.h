@@ -70,7 +70,7 @@
 #define I2C_LCD1602_CHARACTER_BLOCK        0b11111111   ///< 5x8 filled block
 
 // Delays (microseconds)
-#define DELAY_POWER_ON            50000  // wait at least 40us after VCC rises to 2.7V
+#define DELAY_POWER_ON            200000  // wait more than 15ms after VCC rises to 2.7V
 #define DELAY_INIT_1               4500  // wait at least 4.1ms (fig 24, page 46)
 #define DELAY_INIT_2               4500  // wait at least 4.1ms (fig 24, page 46)
 #define DELAY_INIT_3                120  // wait at least 100us (fig 24, page 46)

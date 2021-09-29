@@ -22,8 +22,8 @@
 #include "lcd1602.h"
 
 // I2C Pin def
-#define OTTO_I2C_SDA_PIN 27
-#define OTTO_I2C_SCL_PIN 26
+#define OTTO_I2C_SDA_PIN 26
+#define OTTO_I2C_SCL_PIN 25
 #define OTTO_I2C_FREQ 400000
 
 // I2C Conf

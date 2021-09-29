@@ -108,11 +108,13 @@ esp_err_t LCD1602::begin(i2c_port_t portNum) {
 
     // Set MCP GPIO to output mode, default is 0xFF
     err = writeReg(MCP23008_REG_IODIR, 0);
+    ESP_ERROR_CHECK(err);
     if (err != ESP_OK)
         return err;
 
     // Set MCP GPIO to output mode, default is 0xFF
     err = writeReg(MCP23008_REG_IPOL, 0);
+    ESP_ERROR_CHECK(err);
     if (err != ESP_OK)
         return err;
 
@@ -147,23 +149,50 @@ esp_err_t LCD1602::begin(i2c_port_t portNum) {
     err = writeReg(MCP23008_REG_GPIO, 0x00);
     if (err != ESP_OK)
         return err;
+    ESP_ERROR_CHECK(err);
     
-    ets_delay_us(20*1000);
-    write_top_nibble(0b0011 << 4);
-    ets_delay_us(5*1000);
-    write_top_nibble(0b0011 << 4);
-    ets_delay_us(150);
-    write_top_nibble(0b0011 << 4);
+    ESP_LOGI("Begin", "config");
+    ets_delay_us(DELAY_POWER_ON);
+    err = write_top_nibble(0b0011 << 4);
+    ESP_ERROR_CHECK(err);
+    ets_delay_us(DELAY_INIT_1);
+    err = write_top_nibble(0b0011 << 4);
+    ESP_ERROR_CHECK(err);
+    ets_delay_us(DELAY_INIT_3);
+    err = write_top_nibble(0b0011 << 4);
+    ESP_ERROR_CHECK(err);
     
-    write_top_nibble(0b0010 << 4);
-    write_top_nibble(0b0010 << 4);
-    write_top_nibble(0b0001 << 4);
-    write_top_nibble(0b0000 << 4);
-    write_top_nibble(0b1000 << 4);
-    write_top_nibble(0b0000 << 4);
-    write_top_nibble(0b0001 << 4);
-    write_top_nibble(0b0000 << 4);
-    write_top_nibble(0b0111 << 4);
+    // Function set
+    err = write_top_nibble(0b0010 << 4);
+    ESP_ERROR_CHECK(err);
+    err = write_top_nibble(0b0010 << 4);
+    ESP_ERROR_CHECK(err);
+    err = write_top_nibble(0b1000 << 4);
+    ESP_ERROR_CHECK(err);
+
+    // Display on/off control
+    err = write_top_nibble(FLAG_DISPLAY_CONTROL_DISPLAY_OFF << 4);
+    ESP_ERROR_CHECK(err);
+    err = write_top_nibble(FLAG_DISPLAY_CONTROL_DISPLAY_ON << 4);
+    ESP_ERROR_CHECK(err);
+
+    // Display clear
+    err = write_top_nibble(0b0000 << 4);
+    ESP_ERROR_CHECK(err);
+    err = write_top_nibble(0b0001 << 4);
+    ESP_ERROR_CHECK(err);
+
+    // Entry mode set
+    err = write_top_nibble(0b0000 << 4);
+    ESP_ERROR_CHECK(err);
+    err = write_top_nibble(0b0111 << 4);
+    ESP_ERROR_CHECK(err);
+
+    // Write an A
+    write_string("OTTO Test");
+
+
+
 
     // ESP_LOGI("Begin", "Set all to 0 in 3s");
     // vTaskDelay(3000 / portTICK_RATE_MS);
@@ -174,6 +203,7 @@ esp_err_t LCD1602::begin(i2c_port_t portNum) {
     //     return err;
 
     // ESP_LOGI("Begin", "Set all to 1 in 3s");
+    ESP_LOGI("Begin", "Done");
     vTaskDelay(300000 / portTICK_RATE_MS);
 
     // // Set default outputs to all 0s
