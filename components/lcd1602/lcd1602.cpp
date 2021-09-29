@@ -153,43 +153,48 @@ esp_err_t LCD1602::begin(i2c_port_t portNum) {
     
     ESP_LOGI("Begin", "config");
     ets_delay_us(DELAY_POWER_ON);
-    err = write_top_nibble(0b0011 << 4);
+    err = write_top_nibble(COMMAND_FUNCTION_SET_INIT);
     ESP_ERROR_CHECK(err);
     ets_delay_us(DELAY_INIT_1);
-    err = write_top_nibble(0b0011 << 4);
+    err = write_top_nibble(COMMAND_FUNCTION_SET_INIT);
     ESP_ERROR_CHECK(err);
     ets_delay_us(DELAY_INIT_3);
-    err = write_top_nibble(0b0011 << 4);
+    err = write_top_nibble(COMMAND_FUNCTION_SET_INIT);
     ESP_ERROR_CHECK(err);
     
     // Function set
-    err = write_top_nibble(0b0010 << 4);
+    // Set 4 bit mode 
+    err = write_top_nibble(COMMAND_FUNCTION_SET | FLAG_FUNCTION_SET_MODE_4BIT);
     ESP_ERROR_CHECK(err);
-    err = write_top_nibble(0b0010 << 4);
-    ESP_ERROR_CHECK(err);
-    err = write_top_nibble(0b1000 << 4);
+    
+    // Set 4 bit mode and lines of LCD
+    err = write_command(COMMAND_FUNCTION_SET | FLAG_FUNCTION_SET_MODE_4BIT | FLAG_FUNCTION_SET_LINES_2);
     ESP_ERROR_CHECK(err);
 
     // Display on/off control
-    err = write_top_nibble(FLAG_DISPLAY_CONTROL_DISPLAY_OFF << 4);
+    err = write_command(COMMAND_DISPLAY_CONTROL | FLAG_DISPLAY_CONTROL_DISPLAY_OFF);
     ESP_ERROR_CHECK(err);
-    err = write_top_nibble(FLAG_DISPLAY_CONTROL_DISPLAY_ON << 4);
-    ESP_ERROR_CHECK(err);
+    err = write_command(COMMAND_DISPLAY_CONTROL | FLAG_DISPLAY_CONTROL_DISPLAY_ON | FLAG_DISPLAY_CONTROL_CURSOR_OFF | FLAG_DISPLAY_CONTROL_BLINK_OFF);
+    // ESP_ERROR_CHECK(err);
 
     // Display clear
-    err = write_top_nibble(0b0000 << 4);
-    ESP_ERROR_CHECK(err);
-    err = write_top_nibble(0b0001 << 4);
+    err = write_command(COMMAND_CLEAR_DISPLAY);
     ESP_ERROR_CHECK(err);
 
     // Entry mode set
-    err = write_top_nibble(0b0000 << 4);
+    // err = write_command(FLAG_ENTRY_MODE_SET_ENTRY_DECREMENT | FLAG_ENTRY_MODE_SET_ENTRY_SHIFT_OFF);
+    // ESP_ERROR_CHECK(err);
+    err = write_command(COMMAND_ENTRY_MODE_SET | FLAG_ENTRY_MODE_SET_ENTRY_INCREMENT | FLAG_ENTRY_MODE_SET_ENTRY_SHIFT_ON);
     ESP_ERROR_CHECK(err);
-    err = write_top_nibble(0b0111 << 4);
+
+    // Home
+    err = write_command(COMMAND_RETURN_HOME);
     ESP_ERROR_CHECK(err);
+    ets_delay_us(600);
 
     // Write an A
     write_string("OTTO Test");
+
 
 
 
@@ -448,14 +453,14 @@ esp_err_t LCD1602::define_char(i2c_lcd1602_custom_index_t index, const uint8_t p
     {
         err = write_data(pixelmap[i]);
     }
-    return ESP_OK;
+    return err;
 }
 
 esp_err_t LCD1602::write_char(uint8_t chr) {
     esp_err_t err = ESP_FAIL;
     err = write_data(chr);
 
-    return ESP_OK;
+    return err;
 }
 
 esp_err_t LCD1602::write_string(const char *str) {

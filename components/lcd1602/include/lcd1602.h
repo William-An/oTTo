@@ -70,7 +70,7 @@
 #define I2C_LCD1602_CHARACTER_BLOCK        0b11111111   ///< 5x8 filled block
 
 // Delays (microseconds)
-#define DELAY_POWER_ON            200000  // wait more than 15ms after VCC rises to 2.7V
+#define DELAY_POWER_ON            50000  // wait more than 15ms after VCC rises to 2.7V
 #define DELAY_INIT_1               4500  // wait at least 4.1ms (fig 24, page 46)
 #define DELAY_INIT_2               4500  // wait at least 4.1ms (fig 24, page 46)
 #define DELAY_INIT_3                120  // wait at least 100us (fig 24, page 46)
@@ -82,14 +82,17 @@
 #define DELAY_ENABLE_PULSE_SETTLE    50  // command requires > 37us to settle (table 6 in datasheet)
 
 // Commands
+
 #define COMMAND_CLEAR_DISPLAY       0x01
 #define COMMAND_RETURN_HOME         0x02
 #define COMMAND_ENTRY_MODE_SET      0x04
 #define COMMAND_DISPLAY_CONTROL     0x08
 #define COMMAND_SHIFT               0x10
 #define COMMAND_FUNCTION_SET        0x20
+#define COMMAND_FUNCTION_SET_INIT   COMMAND_FUNCTION_SET|FLAG_FUNCTION_SET_MODE_8BIT
 #define COMMAND_SET_CGRAM_ADDR      0x40
 #define COMMAND_SET_DDRAM_ADDR      0x80
+
 
 // COMMAND_ENTRY_MODE_SET flags
 #define FLAG_ENTRY_MODE_SET_ENTRY_INCREMENT       0x02
@@ -118,6 +121,7 @@
 #define FLAG_FUNCTION_SET_LINES_1        0x00
 #define FLAG_FUNCTION_SET_DOTS_5X10      0x04
 #define FLAG_FUNCTION_SET_DOTS_5X8       0x00
+
 
 // Control flags
 #define FLAG_BACKLIGHT_ON    0b00001000      // backlight enabled (disabled if clear)
