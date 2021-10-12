@@ -211,6 +211,7 @@ class LCD1602 {
         esp_err_t write(uint8_t value, uint8_t register_select_flag);
         esp_err_t write_command(uint8_t command);
         esp_err_t write_data(uint8_t data);
+        esp_err_t write_custom_char(unsigned char *Pattern, const char Location) ;
 };
 
 #endif // !__LCD1602_H__

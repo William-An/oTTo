@@ -118,31 +118,6 @@ esp_err_t LCD1602::begin(i2c_port_t portNum) {
     if (err != ESP_OK)
         return err;
 
-    //initialization of lcd display
-    //wait for stabilization 500ms
-    // vTaskDelay(500 / portTICK_RATE_MS);
-    // //fuction set
-    // err = writeReg(0b0010,0);
-    // if (err != ESP_OK)
-    //     return err;
-    // //check busy flag
-    // // !use delay instead of checking
-    // vTaskDelay(500 / portTICK_RATE_MS);
-    // //Display on/off control
-    // err = writeReg(0b0000,0);
-    // if (err != ESP_OK)
-    //     return err;
-    // err = writeReg(0b)
-    // //check busy flag
-    // // !use delay instead of checking
-    // vTaskDelay(500 / portTICK_RATE_MS);
-    // //Display clear
-    // err = writeReg(0b0000,0);
-    // if (err != ESP_OK)
-    //     return err;
-    // //Return home
-    // err = writeReg();
-
     ESP_LOGI("Begin", "Set all to 0s");
 
     // Set default outputs to all 0s
@@ -150,6 +125,78 @@ esp_err_t LCD1602::begin(i2c_port_t portNum) {
     if (err != ESP_OK)
         return err;
     ESP_ERROR_CHECK(err);
+    
+
+
+    // Home
+    err = write_command(COMMAND_RETURN_HOME);
+    ESP_ERROR_CHECK(err);
+    ets_delay_us(600);
+    
+
+    // Write an A
+   err = write_string("OTTO  Test");
+
+    unsigned char T[] = {
+        0x7E, //  ######
+        0x18, //    ##  
+        0x30, //   ##   
+        0x30, //   ##   
+        0x30, //   ##   
+        0x60, //  ##    
+        0x60, //  ##    
+        0x60, //  ##    
+        0xC0, // ##     
+        0x00, //  
+        };
+    unsigned char O[] = {
+	// @50 'o' (6 pixels wide)
+	0x00, //       
+	0x00, //       
+	0x00, //       
+	0x00, //       
+	0x3C, //   ####
+	0x6C, //  ## ##
+	0xCC, // ##  ##
+	0xCC, // ##  ##
+	0xD8, // ## ## 
+	0xF0, // ####   
+        };
+    
+    // write_command(0x40);//pointer to first CGRAM addres
+    // write_data(0x00);
+    // write_data(0x00);
+    // write_data(0x00);
+    // write_data(0x00);
+    // write_data(0x3C);
+    // write_data(0x6C);
+    // write_data(0xCC);
+    // write_data(0xCC);
+    // write_data(0xD8);
+    // write_data(0xF0);
+    
+    
+
+    
+    //set left to right ???
+    // write_command(FLAG_ENTRY_MODE_SET_ENTRY_INCREMENT | FLAG_ENTRY_MODE_SET_ENTRY_SHIFT_OFF);
+
+    ESP_LOGI("Begin", "Done");
+    vTaskDelay(300000 / portTICK_RATE_MS);
+
+    // Reset device
+    ESP_LOGI("Begin", "Reseting chip");
+    return reset();
+}
+
+// Display control
+esp_err_t LCD1602::reset() {
+    esp_err_t err = ESP_OK;
+
+    // Set default outputs to all 0s except enable
+    err = writeReg(MCP23008_REG_GPIO, 0);
+    if (err != ESP_OK)
+        return err;
     
     ESP_LOGI("Begin", "config");
     ets_delay_us(DELAY_POWER_ON);
@@ -175,149 +222,14 @@ esp_err_t LCD1602::begin(i2c_port_t portNum) {
     err = write_command(COMMAND_DISPLAY_CONTROL | FLAG_DISPLAY_CONTROL_DISPLAY_OFF);
     ESP_ERROR_CHECK(err);
     err = write_command(COMMAND_DISPLAY_CONTROL | FLAG_DISPLAY_CONTROL_DISPLAY_ON | FLAG_DISPLAY_CONTROL_CURSOR_OFF | FLAG_DISPLAY_CONTROL_BLINK_OFF);
-    // ESP_ERROR_CHECK(err);
 
     // Display clear
     err = write_command(COMMAND_CLEAR_DISPLAY);
     ESP_ERROR_CHECK(err);
 
     // Entry mode set
-    // err = write_command(FLAG_ENTRY_MODE_SET_ENTRY_DECREMENT | FLAG_ENTRY_MODE_SET_ENTRY_SHIFT_OFF);
-    // ESP_ERROR_CHECK(err);
     err = write_command(COMMAND_ENTRY_MODE_SET | FLAG_ENTRY_MODE_SET_ENTRY_INCREMENT | FLAG_ENTRY_MODE_SET_ENTRY_SHIFT_ON);
     ESP_ERROR_CHECK(err);
-
-    // Home
-    err = write_command(COMMAND_RETURN_HOME);
-    ESP_ERROR_CHECK(err);
-    ets_delay_us(600);
-
-    // Write an A
-    write_string("OTTO Test");
-
-
-
-
-
-    // ESP_LOGI("Begin", "Set all to 0 in 3s");
-    // vTaskDelay(3000 / portTICK_RATE_MS);
-    
-    // // Set default outputs to all 0s
-    // err = writeReg(MCP23008_REG_GPIO, 0);
-    // if (err != ESP_OK)
-    //     return err;
-
-    // ESP_LOGI("Begin", "Set all to 1 in 3s");
-    ESP_LOGI("Begin", "Done");
-    vTaskDelay(300000 / portTICK_RATE_MS);
-
-    // // Set default outputs to all 0s
-    // err = writeReg(MCP23008_REG_GPIO, 0xff);
-    // if (err != ESP_OK)
-    //     return err;
-
-    // // Wait at least 40ms after power rises above 2.7V before sending commands.
-    // // vTaskDelay(DELAY_POWER_ON / portTICK_RATE_MS);
-    // vTaskDelay(5000 / portTICK_RATE_MS);
-
-    // Reset device
-    ESP_LOGI("Begin", "Reseting chip");
-    return reset();
-}
-
-// Display control
-esp_err_t LCD1602::reset() {
-    esp_err_t err = ESP_OK;
-    esp_err_t first_err = ESP_OK;
-    esp_err_t last_err = ESP_OK;
-
-    
-    // Set default outputs to all 0s except enable
-    err = writeReg(MCP23008_REG_GPIO, 0);
-    if (err != ESP_OK)
-        return err;
-    
-    vTaskDelay(1000 / portTICK_RATE_MS);
-    
-    // Sync function for 4bit interface
-    ESP_LOGI(__func__, "Sync");
-    vTaskDelay(500 / portTICK_RATE_MS);
-    write_top_nibble(0);
-    vTaskDelay(500 / portTICK_RATE_MS);
-    write_top_nibble(0);
-    vTaskDelay(500 / portTICK_RATE_MS);
-    write_top_nibble(0);
-    vTaskDelay(500 / portTICK_RATE_MS);
-    write_top_nibble(0);
-    vTaskDelay(500 / portTICK_RATE_MS);
-    write_top_nibble(0);
-    vTaskDelay(500 / portTICK_RATE_MS);
-
-    // Select 4-bit mode
-    ESP_LOGI(__func__, "Set 4 bit");
-    write_top_nibble(0x2 << 4);
-    vTaskDelay(10 / portTICK_RATE_MS);
-    write_top_nibble(0x2 << 4);
-    vTaskDelay(10 / portTICK_RATE_MS);
-    write_top_nibble(0b1000 << 4);
-    vTaskDelay(10 / portTICK_RATE_MS);
-    vTaskDelay(100000 / portTICK_RATE_MS);
-
-    // Delay to simulate checking busy flag 
-    vTaskDelay(DELAY_INIT_1 / portTICK_RATE_MS);
-
-    // Display on/off control
-    ESP_LOGI(__func__, "Display off");
-    write_top_nibble(0x0 << 4);
-    vTaskDelay(10 / portTICK_RATE_MS);
-    // Enable cursor and all stuffs 
-    write_top_nibble(0b1000 << 4);
-
-    // Delay to simulate checking busy flag 
-    vTaskDelay(DELAY_INIT_1 / portTICK_RATE_MS);
-
-    // Display clear 
-    ESP_LOGI(__func__, "Clear");
-    write_top_nibble(0x0 << 4);
-    write_top_nibble(0x1 << 4);
-
-    // Delay to simulate checking busy flag 
-    vTaskDelay(DELAY_INIT_1 / portTICK_RATE_MS);
-
-    // Home 
-    ESP_LOGI(__func__, "Home");
-    write_top_nibble(0x0 << 4);
-    write_top_nibble(0x2 << 4);
-
-    // Delay to simulate checking busy flag 
-    vTaskDelay(DELAY_INIT_1 / portTICK_RATE_MS);
-
-    // Entry mode set
-    ESP_LOGI(__func__, "Entry mode");
-    write_top_nibble(0x0 << 4);
-    write_top_nibble(0x06 << 4);
-
-    // Delay to simulate checking busy flag 
-    vTaskDelay(DELAY_INIT_1 / portTICK_RATE_MS);
-
-    // Enable cursor and blink
-    ESP_LOGI(__func__, "Turns on ");
-    write_top_nibble(0x0 << 4);
-    write_top_nibble(0xC << 4);
-
-    // Delay to simulate checking busy flag 
-    vTaskDelay(DELAY_INIT_1 / portTICK_RATE_MS);
-
-    // Write an A
-    ESP_LOGI(__func__, "Write something");
-    write_top_nibble(0b0100 << 4 | 0b01);
-    write_top_nibble(0b0001 << 4 | 0b01);
-
-    // Delay to simulate checking busy flag 
-    vTaskDelay(DELAY_INIT_1 / portTICK_RATE_MS);
-
-    ESP_LOGI(__func__, "Finish reseting");
-    for(;;);
     return err;
 }
 
@@ -327,7 +239,7 @@ esp_err_t LCD1602::clear() {
     err = write_command(COMMAND_CLEAR_DISPLAY);
     if (err == ESP_OK)
     {
-        vTaskDelay(1000 / portTICK_RATE_MS);
+        ets_delay_us(1000);
     }
 
     return ESP_OK;
@@ -653,3 +565,81 @@ esp_err_t LCD1602::write_data(uint8_t data) {
     ESP_LOGD("LCD1602", "write_data 0x%02x", data);
     return write(data, FLAG_RS_DATA);
 }
+
+esp_err_t LCD1602::write_custom_char(unsigned char *Pattern, const char Location) {
+    esp_err_t err = ESP_FAIL;
+    int i=0; 
+    err= write_command(0x40+(Location*8));     
+    //Send the Address of CGRAM
+    for (i=0; i<8; i++){
+        err = write_data(Pattern[i]);
+    //Pass the bytes of pattern on LCD 
+    }
+                 
+    return err;
+}
+
+
+
+// const uint_8 microsoftSansSerif_8ptBitmaps[] = 
+// {
+// 	// @0 'T' (7 pixels wide)
+// 	0x7E, //  ######
+// 	0x18, //    ##  
+// 	0x30, //   ##   
+// 	0x30, //   ##   
+// 	0x30, //   ##   
+// 	0x60, //  ##    
+// 	0x60, //  ##    
+// 	0x60, //  ##    
+// 	0xC0, // ##     
+// 	0x00, //        
+
+// 	// @10 'a' (7 pixels wide)
+// 	0x00, //        
+// 	0x00, //        
+// 	0x00, //        
+// 	0x00, //        
+// 	0x1E, //    ####
+// 	0x06, //      ##
+// 	0x3E, //   #####
+// 	0x66, //  ##  ##
+// 	0xEE, // ### ###
+// 	0x7C, //  ##### 
+
+// 	// @20 'e' (6 pixels wide)
+// 	0x00, //       
+// 	0x00, //       
+// 	0x00, //       
+// 	0x00, //       
+// 	0x3C, //   ####
+// 	0x6C, //  ## ##
+// 	0xFC, // ######
+// 	0xC0, // ##    
+// 	0xDC, // ## ###
+// 	0xF0, // ####  
+
+// 	// @30 'm' (10 pixels wide)
+// 	0x00, 0x00, //           
+// 	0x00, 0x00, //           
+// 	0x00, 0x00, //           
+// 	0x00, 0x00, //           
+// 	0x3F, 0x80, //   ####### 
+// 	0x3F, 0xC0, //   ########
+// 	0x6D, 0x80, //  ## ## ## 
+// 	0x6D, 0x80, //  ## ## ## 
+// 	0x6D, 0x80, //  ## ## ## 
+// 	0xDB, 0x00, // ## ## ##  
+
+// 	// @50 'o' (6 pixels wide)
+// 	0x00, //       
+// 	0x00, //       
+// 	0x00, //       
+// 	0x00, //       
+// 	0x3C, //   ####
+// 	0x6C, //  ## ##
+// 	0xCC, // ##  ##
+// 	0xCC, // ##  ##
+// 	0xD8, // ## ## 
+// 	0xF0, // ####  
+// };
