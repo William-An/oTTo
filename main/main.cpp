@@ -24,29 +24,9 @@
 #include "driver/uart.h"
 #include "string.h"
 #include "driver/gpio.h"
+#include "communication_struct.h"
 
 extern "C" void app_main(void);
-
-// static const int RX_BUF_SIZE = 1024;
-
-// #define TXD_PIN (GPIO_NUM_4)
-// #define RXD_PIN (GPIO_NUM_2)
-
-// void init(void) {
-//     const uart_config_t uart_config = {
-//         .baud_rate = 115200,
-//         .data_bits = UART_DATA_8_BITS,
-//         .parity = UART_PARITY_DISABLE,
-//         .stop_bits = UART_STOP_BITS_1,
-//         .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
-//         .source_clk = UART_SCLK_APB,
-//     };
-//     // We won't use a buffer for sending data.
-//     uart_driver_install(UART_NUM_0, RX_BUF_SIZE * 2, 0, 0, NULL, 0);
-//     uart_param_config(UART_NUM_0, &uart_config);
-//     // uart_set_pin(UART_NUM_0, TXD_PIN, RXD_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
-//     uart_set_pin(0, 1, 3, -1, -1);
-// }
 
 // int sendData(const char* logName, const char* data)
 // {
@@ -83,19 +63,64 @@ extern "C" void app_main(void);
 //     free(data);
 // }
 
+void vTaskFunction( void *pvParameters )
+{
+    const char *RX_TASK_TAG = "RX_TASK";
+    esp_log_level_set(RX_TASK_TAG, ESP_LOG_INFO);
+    char *pcTaskName;
+    const TickType_t xDelay250ms = pdMS_TO_TICKS( 1000 );
+    /* The string to print out is passed in via the parameter. Cast this to a
+    character pointer. */
+    pcTaskName = ( char * ) pvParameters;
+    const int len = strlen(pcTaskName);
+    for( ;; )
+    {
+        ESP_LOGI(RX_TASK_TAG, "%s", pcTaskName);
+        // ESP_LOG_BUFFER_HEXDUMP(RX_TASK_TAG, pcTaskName, len, ESP_LOG_INFO);
+        /* Delay for a period. This time a call to vTaskDelay() is used which places
+        the task into the Blocked state until the delay period has expired. The
+        parameter takes a time specified in ‘ticks’, and the pdMS_TO_TICKS() macro
+        is used (where the xDelay250ms constant is declared) to convert 250
+        milliseconds into an equivalent time in ticks. */
+        // vTaskDelay( xDelay250ms );
+  
+    }
+}
+
+static const char *pcTextForTask1 = "Task 1 is running\r\n";
+static const char *pcTextForTask2 = "Task 2 is running\r\n";
 
 void app_main(void)
 {
-    // Test IMU Fusion
-    // test_fusion();
-    // init();
-    // xTaskCreate(rx_task, "uart_rx_task", 1024*2, NULL, configMAX_PRIORITIES, NULL);
-    // xTaskCreate(tx_task, "uart_tx_task", 1024*2, NULL, configMAX_PRIORITIES-1, NULL);
+    // const esp_timer_create_args_t periodic_timer_args = {
+    //         .name = "periodic"
+    // };
+
+    // esp_timer_handle_t periodic_timer;
+    // ESP_ERROR_CHECK(esp_timer_create(&periodic_timer_args, &periodic_timer));
+    // ESP_ERROR_CHECK(esp_timer_start_periodic(periodic_timer, 500000));
 
     UartWired uartWired(false);
+    void* data = (void*) malloc(32); // 28 bytes are the largest possible packet
+    float i = 0;
     while (true) {
-        const char* sentString = "Hello!";
-        const int txBytes = uartWired.sendData(sentString);
+        Command_Data sentString;
+        sentString.leftAngularVelo = 24.38 + i;
+        sentString.rightAngularVelo = 55.98;
+        sentString.angleRotatedLeftMotor = 999.4342;
+        sentString.angleRotatedRightMotor = 10.2;
+        const int txBytes = uartWired.sendData(&sentString, 32);
+        // vTaskDelay(2000 / portTICK_PERIOD_MS);
+        // const int rxBytes = uartWired.receiveData(data, 32);
+        // if (rxBytes > 0) { // if receive anything
+        //     ESP_LOGI("RX_TASK", "Read %d bytes\n", rxBytes);
+        //     uartWired.sendData(data);
+        // }
+        // ESP_LOGI("RX_TASK", "Test");
+        // ESP_LOGI("RX_TASK", "%d num of bytes read", rxBytes);
         vTaskDelay(2000 / portTICK_PERIOD_MS);
+        i++;
+        // ESP_LOGI("TIMER", "Started timers, time since boot: %lld us", esp_timer_get_time());
     }
 }
+

@@ -19,9 +19,10 @@ class CommunicationIF {
     public:
         CommunicationIF() {};
         char myString[10] = "hello";
-        int sendData(const char* data);
+        int sendData(const void* data, uint32_t size);
+        int receiveData(void* data, uint32_t size);
+        uint32_t calculateCRC();
 
-        // int receiveData(const char* logName, const char* data);
     protected:
         bool _debugMode = false;
 };
