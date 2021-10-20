@@ -6,6 +6,7 @@ const uint32_t COMMAND_DATA_PACKET_SIZE = 32;
 const uint32_t FEEDBACK_DATA_SIZE = 28;
 const uint32_t FEEDBACK_DATA_PACKET_SIZE = 44;
 
+// For UART (Not ESP-NOW)
 // 16 bytes
 typedef struct Command_Data {
     float leftAngularVelo;
@@ -35,6 +36,7 @@ typedef struct Feedback_Data {
 
 // 44 bytes
 typedef struct Feedback_Data_Packet {
+    uint32_t header;
     Feedback_Data feedBackData;
     uint64_t timestamp;
     uint32_t CRC;
