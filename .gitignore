@@ -69,3 +69,6 @@ sdkconfig.old
 # Logging
 *.log
 log*.txt
+
+# Tracing
+trace/
