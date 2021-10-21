@@ -47,17 +47,9 @@
 #include "imu_sensor.h"
 #include "imu_icm_20x.h"
 
-#define I2C_MASTER_TIMEOUT_MS       1000
-#define I2C_MASTER_TX_BUF_DISABLE   0                          /*!< I2C master doesn't need buffer */
-#define I2C_MASTER_RX_BUF_DISABLE   0                          /*!< I2C master doesn't need buffer */
-
-// I2C Pin def
-#define ICM20948_I2C_SDA_PIN 27
-#define ICM20948_I2C_SCL_PIN 26
-#define ICM20948_I2C_FREQ 400000
-
-// Use port 0 of I2C
-#define ICM20948_I2C_PORT_NUM 0
+#ifndef I2C_MASTER_TIMEOUT_MS
+  #define I2C_MASTER_TIMEOUT_MS       1000
+#endif
 
 #define ICM20948_I2CADDR_DEFAULT 0x69 ///< ICM20948 default i2c address
 #define ICM20948_MAG_ID 0x09          ///< The chip ID for the magnetometer
@@ -151,7 +143,6 @@ class ICM20948IMU : public GenericIMU {
         void selfTest();
 
         // Configure the sensor
-        esp_err_t config();
         esp_err_t initMag();
         esp_err_t writeGyroRange(icm20948_gyro_range_t);
         esp_err_t writeAccelRange(icm20948_accel_range_t);
@@ -162,11 +153,8 @@ class ICM20948IMU : public GenericIMU {
         esp_err_t setMagRate(ak09916_data_rate_t new_mag_rate);
         esp_err_t getMagId(uint8_t *dst);
 
-        // Default i2c setting
-        esp_err_t begin();
-
         // Begin transcation with the sensor and setup basic stuffs
-        esp_err_t begin(i2c_port_t, i2c_config_t);
+        esp_err_t begin(i2c_port_t portNum);
 
         // ICM I2C Master config
         esp_err_t setI2CBypass(bool bypass_i2c);
@@ -212,8 +200,7 @@ class ICM20948IMU : public GenericIMU {
         // Onboard temp sensor reading, in C
         float temp;
 
-        // I2C config
-        i2c_config_t conf;
+        // I2C info
         i2c_port_t portNum;
         uint8_t icm_20948_addr;
 
