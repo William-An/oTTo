@@ -44,22 +44,20 @@ uint32_t UartWired :: calculateCRC() {
 }
 
 int UartWired :: receiveData(void* data, uint32_t size) {
-    const TickType_t xDelay = pdMS_TO_TICKS( 1000 );
+    // const TickType_t xDelay = pdMS_TO_TICKS( 1000 );
     static const char *TX_TASK_TAG = "TX_TASK";
     int readBytes = 0;
 
-    if (size == COMMAND_DATA_PACKET_SIZE) {
-        readBytes = uart_read_bytes(UART_NUM_0, data, COMMAND_DATA_SIZE, xDelay);
+    if (size == sizeof(Command_Data_Packet)) {
+        readBytes = uart_read_bytes(UART_NUM_0, data, sizeof(Command_Data_Packet), portMAX_DELAY);
         // Command_Data_Packet* packet = (Command_Data_Packet*) data;
         // Command_Data packet_data = packet -> commandData;
         Command_Data packet_data = * (Command_Data*) data;
         esp_log_level_set(TX_TASK_TAG, ESP_LOG_INFO);
-        ESP_LOGI(TX_TASK_TAG, "The data leftAngularVelo is %f", packet_data.leftAngularVelo);
-        ESP_LOGI(TX_TASK_TAG, "The data rightAngularVelo is %f", packet_data.rightAngularVelo);
-        ESP_LOGI(TX_TASK_TAG, "The data angleRotatedLeftMotor is %f", packet_data.angleRotatedLeftMotor);
-        ESP_LOGI(TX_TASK_TAG, "The data angleRotatedRightMotor is %f", packet_data.angleRotatedRightMotor);
-    } else if (size == FEEDBACK_DATA_PACKET_SIZE) {
-
+        // ESP_LOGI(TX_TASK_TAG, "The data leftAngularVelo is %f", packet_data.leftAngularVelo);
+        // ESP_LOGI(TX_TASK_TAG, "The data rightAngularVelo is %f", packet_data.rightAngularVelo);
+        // ESP_LOGI(TX_TASK_TAG, "The data angleRotatedLeftMotor is %f", packet_data.angleRotatedLeftMotor);
+        // ESP_LOGI(TX_TASK_TAG, "The data angleRotatedRightMotor is %f", packet_data.angleRotatedRightMotor);
     }
 
     return readBytes;

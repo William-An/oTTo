@@ -1,10 +1,10 @@
 static const int RX_BUF_SIZE = 1024;
 
 const uint32_t HEADER = 0x92384233;
-const uint32_t COMMAND_DATA_SIZE = 16;
-const uint32_t COMMAND_DATA_PACKET_SIZE = 32;
-const uint32_t FEEDBACK_DATA_SIZE = 28;
-const uint32_t FEEDBACK_DATA_PACKET_SIZE = 44;
+// const uint32_t COMMAND_DATA_SIZE = 16;
+// const uint32_t COMMAND_DATA_PACKET_SIZE = 32;
+// const uint32_t FEEDBACK_DATA_SIZE = 28;
+// const uint32_t FEEDBACK_DATA_PACKET_SIZE = 44;
 
 // For UART (Not ESP-NOW)
 // 16 bytes

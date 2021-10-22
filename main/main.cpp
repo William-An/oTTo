@@ -19,11 +19,15 @@
 #include "esp_spi_flash.h"
 #include "imu_sensor.h"
 #include "imu_icm_20948.h"
+#include "communication_if.h"
+#include "communication_struct.h"
+#include "uart_wired.h"
 #include "otto.h"
 
 extern "C" void app_main(void);
 
-static QueueHandle_t imuQueue;
+static QueueHandle_t dataInQueue;
+static QueueHandle_t dataOutQueue;
 
 void app_main(void)
 {
@@ -85,7 +89,6 @@ void otto_init(void *param) {
     ESP_LOGI(__func__, "%dMB %s flash\n", spi_flash_get_chip_size() / (1024 * 1024),
             (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "embedded" : "external");
     ESP_LOGI(__func__, "Minimum free heap size: %d bytes\n", esp_get_minimum_free_heap_size());
-
     ESP_LOGI(__func__, "FreeRTOS %d ms per tick", portTICK_RATE_MS);
 
     // I2C Port initialization
@@ -95,13 +98,17 @@ void otto_init(void *param) {
     // Get Mac addr
     ESP_ERROR_CHECK(get_macAddr());
 
-    // TODO WiFi and ESP-NOW initialization
+    // Communication initialization
+    ESP_LOGI(__func__, "Init communication with UART");
+    UartWired uartWired(false);
 
-    // TODO Task queue initialization
-    ESP_LOGI(__func__, "Init task Queues");
+    // data in queue initialization
+    ESP_LOGI(__func__, "Init data in Queue");
+    dataInQueue = xQueueCreate(OTTO_DATA_IN_QUEUE_LEN, sizeof(Command_Data_Packet));
 
-    // Init imu queue
-    imuQueue = xQueueCreate(OTTO_IMU_QUEUE_LEN, sizeof(AngleVector3_t));
+    // data out queue initialization
+    ESP_LOGI(__func__, "Init data out Queue");
+    dataOutQueue = xQueueCreate(OTTO_DATA_OUT_QUEUE_LEN, sizeof(Feedback_Data_Packet));
 
     // Start subsystem tasks
     // IMU task
@@ -110,13 +117,21 @@ void otto_init(void *param) {
     ESP_LOGI(__func__, "Launch IMU task");
     xTaskCreatePinnedToCore(imu_task, "IMU Task", 4096, NULL, OTTO_IMU_TASK_PRI, NULL, APP_CPU_NUM);
 
-    // TODO LCD task
+    // LCD task
+    ESP_LOGI(__func__, "Launch LCD task");
+    xTaskCreate(display_task, "LCD Task", 4096, NULL, OTTO_DISP_TASK_PRI, NULL);
 
-    // COMM task
-    ESP_LOGI(__func__, "Launch Comm task");
-    xTaskCreate(comm_task, "Comm Task", 2048, NULL, OTTO_COMM_TASK_PRI, NULL);
+    // COMM Receiver task
+    ESP_LOGI(__func__, "Launch Comm receiver task");
+    xTaskCreate(comm_receiver_task, "Comm receiver Task", 2048, NULL, OTTO_COMM_RECEIVER_TASK_PRI, NULL);
 
-    // TODO Motor task
+    // COMM Sender task
+    ESP_LOGI(__func__, "Launch Comm sender task");
+    xTaskCreate(comm_sender_task, "Comm sender Task", 2048, NULL, OTTO_COMM_SENDER_TASK_PRI, NULL);
+
+    // Motor task
+    ESP_LOGI(__func__, "Launch motor task");
+    xTaskCreate(motor_task, "motor Task", 2048, NULL, OTTO_MOTOR_TASK_PRI, NULL);
 
     // Clean up init task
     vTaskDelete(NULL);
@@ -136,6 +151,7 @@ void imu_task(void *param) {
     TickType_t xLastWakeTime;   // Last time the measurement is run
     TickType_t xImuFrequency;   // Measurement update frequency
     BaseType_t xErr;            // RTOS call error status
+    Feedback_Data feedbackData;
 
     ESP_LOGI(__func__, "IMU Task begins");
 
@@ -147,6 +163,7 @@ void imu_task(void *param) {
     xLastWakeTime = xTaskGetTickCount();
     xImuFrequency = 1000 / OTTO_IMU_RATE_HZ / portTICK_RATE_MS;
     ESP_LOGI(__func__, "IMU Update per %d ticks", xImuFrequency);
+
     while (1) {
         // Delay according to update rate
         vTaskDelayUntil(&xLastWakeTime, xImuFrequency);
@@ -157,37 +174,107 @@ void imu_task(void *param) {
         eulerAngles = imu.getEulerAngles();
         ESP_LOGD(__func__, "r%.2frp%.2fpy%.2fy", eulerAngles.roll, eulerAngles.pitch, eulerAngles.yaw);
 
+        feedbackData.leftAngularVelo = 0;
+        feedbackData.rightAngularVelo = 0;
+        feedbackData.angleRotatedLeftMotor = 0;
+        feedbackData.angleRotatedRightMotor = 0;
+        feedbackData.yaw = eulerAngles.yaw;
+        feedbackData.pitch = eulerAngles.pitch;
+        feedbackData.roll = eulerAngles.roll;
+
         // Send data onto queue, not waiting for slot as can just
         // use next measurement
-        xErr = xQueueSend(imuQueue, &eulerAngles, 0);
-        if (xErr == errQUEUE_FULL)
+        if (xQueueSendToBack(dataOutQueue, &feedbackData, 0) == errQUEUE_FULL) {
             ESP_LOGW(__func__, "IMU Queue full, cannot send");
+        }
     }
+
     ESP_LOGE(__func__, "IMU Task quit unexpectedly");
     vTaskDelete(NULL);
 }
 
 /**
- * @brief Init communication interface and transmit/receive
- *        data
+ * @brief Init communication receiver
  * 
  * @param param 
  */
-void comm_task(void *param) {
-    //! Test task, just echo queue item to serial
-    AngleVector3_t angle;
-    BaseType_t xErr;
+void comm_receiver_task(void *param) {
 
-    ESP_LOGI(__func__, "Comm Task begins");
+    ESP_LOGI(__func__, "Comm receiver Task begins");
+    Command_Data_Packet commandDataPacket;
+    Command_Data commandData;
 
     while (1) {
-        xErr = xQueueReceive(imuQueue, &angle, portMAX_DELAY);
-        if (xErr == pdTRUE)
-            ESP_LOGI(__func__, 
-                "IMU Reading: roll: %.2f pitch: %.2f yaw: %.2f",
-                angle.roll, angle.pitch, angle.yaw);
+        // const int rxBytes = uartWired.receiveData(commandDataPacket, sizeof(Command_Data_Packet));
+        int readBytes = uart_read_bytes(UART_NUM_0, (void*) &commandDataPacket, sizeof(Command_Data_Packet), portMAX_DELAY);
+        if (readBytes == sizeof(Command_Data_Packet)) {
+            // todo: add checking for header, CRC, ... to check the correctness of the packet
+            commandData = commandDataPacket.commandData;
+            if (xQueueSendToBack( dataInQueue, (void*) &commandData, ( TickType_t ) 0 ) != pdPASS )
+            {
+                ESP_LOGI(__func__, "Comm receiver Task: queue full");
+            }
+        }
     }
 
-    ESP_LOGE(__func__, "COMM Task quit unexpectedly");
+    ESP_LOGE(__func__, "COMM receiver Task quit unexpectedly");
     vTaskDelete(NULL);
+}
+
+/**
+ * @brief Init communication sender
+ * 
+ * @param param 
+ */
+void comm_sender_task(void *param) {
+    
+    ESP_LOGI(__func__, "Comm sender Task begins");
+    Feedback_Data feedbackData;
+    Feedback_Data_Packet feedbackDataPacket;
+
+    while (1) {
+        if( xQueueReceive( dataOutQueue, (void*) &feedbackData, portMAX_DELAY ) == pdTRUE) {
+            feedbackDataPacket.CRC = 0; // TODO: 
+            feedbackDataPacket.header = HEADER;
+            feedbackDataPacket.feedBackData = feedbackData;
+            feedbackDataPacket.timestamp = 0; // TODO: 
+            // uartWired.sendData(feedbackDataPacket, sizeof(Feedback_Data_Packet));
+            uart_write_bytes(UART_NUM_0, (void*) &feedbackDataPacket, sizeof(Feedback_Data_Packet));
+        }
+    }
+
+    ESP_LOGE(__func__, "COMM sender Task quit unexpectedly");
+    vTaskDelete(NULL);
+}
+
+/**
+ * @brief Init lcd 
+ * 
+ * @param param 
+ */
+void display_task(void *param) {
+    Command_Data commandData;
+    while(1) {
+        if( xQueuePeek( dataInQueue, (void*) &( commandData ), pdMS_TO_TICKS( 100 ) ) ) {
+            ESP_LOGE(__func__, "display_task received");
+            // todo: display the received data
+        }
+
+        // todo: check button status
+    }
+}
+
+/**
+ * @brief Motor task
+ * 
+ * @param param 
+ */
+void motor_task(void *param) {
+    Command_Data commandData;
+    while(1) {
+        if( xQueueReceive( dataInQueue, (void*) &( commandData ), pdMS_TO_TICKS( 10 ) ) ) {
+            ESP_LOGE(__func__, "motor_task received");
+            // todo: use the data to drive the motor accordingly;
+        }
+    }
 }
