@@ -270,11 +270,35 @@ void display_task(void *param) {
  * @param param 
  */
 void motor_task(void *param) {
+    A4988_Driver ref_wheel;
+
+    Nema17Config_t nema17;
+    nema17.fullStep = 1.8;
+    A4988_Driver ops_wheel (SIXTEENTH_STEP, OPPOSITE, nema17);
+
+    MotorIOConfig_t motor_pin;
+    motor_pin.step = GPIO_NUM_18;
+    motor_pin.en = GPIO_NUM_3;
+    motor_pin.dir = GPIO_NUM_4;
+    motor_pin.ms1 = GPIO_NUM_25;
+    motor_pin.ms2 = GPIO_NUM_26;
+    motor_pin.ms3 = GPIO_NUM_27;
+    ESP_ERROR_CHECK(ref_wheel.configIO(motor_pin));
+
+    motor_pin.step = GPIO_NUM_33;
+    motor_pin.dir = GPIO_NUM_26;
+    motor_pin.en = GPIO_NUM_3;
+    motor_pin.ms1 = GPIO_NUM_12;
+    motor_pin.ms2 = GPIO_NUM_13;
+    motor_pin.ms3 = GPIO_NUM_14;
+    ESP_ERROR_CHECK(ops_wheel.configIO(motor_pin));
     Command_Data commandData;
     while(1) {
         if( xQueueReceive( dataInQueue, (void*) &( commandData ), pdMS_TO_TICKS( 10 ) ) ) {
             ESP_LOGE(__func__, "motor_task received");
             // todo: use the data to drive the motor accordingly;
+            ESP_ERROR_CHECK(ref_wheel.setFixed(commandData.angleRotatedLeftMotor, commandData.leftAngularVelo);
+            ESP_ERROR_CHECK(ops_wheel.setFixed(commandData.angleRotatedRightMotor, commandData.rightAngularVelo));
         }
     }
 }
