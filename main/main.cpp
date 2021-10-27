@@ -256,7 +256,7 @@ void display_task(void *param) {
     Command_Data commandData;
     while(1) {
         if( xQueuePeek( dataInQueue, (void*) &( commandData ), pdMS_TO_TICKS( 100 ) ) ) {
-            ESP_LOGE(__func__, "display_task received");
+            // ESP_LOGE(__func__, "received. %f", commandData);
             // todo: display the received data
         }
 
