@@ -23,6 +23,8 @@
 #include "communication_struct.h"
 #include "uart_wired.h"
 #include "otto.h"
+#include "motor_driver.h"
+#include "motor_stepper.h"
 
 extern "C" void app_main(void);
 
@@ -114,24 +116,24 @@ void otto_init(void *param) {
     // IMU task
     // Pin IMU task to APP_CPU per ESP32 Guidelines: 
     //  https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/freertos-smp.html#floating-points
-    ESP_LOGI(__func__, "Launch IMU task");
-    xTaskCreatePinnedToCore(imu_task, "IMU Task", 4096, NULL, OTTO_IMU_TASK_PRI, NULL, APP_CPU_NUM);
+    // ESP_LOGI(__func__, "Launch IMU task");
+    // xTaskCreatePinnedToCore(imu_task, "IMU Task", 4096, NULL, OTTO_IMU_TASK_PRI, NULL, APP_CPU_NUM);
 
     // LCD task
-    ESP_LOGI(__func__, "Launch LCD task");
-    xTaskCreate(display_task, "LCD Task", 4096, NULL, OTTO_DISP_TASK_PRI, NULL);
+    // ESP_LOGI(__func__, "Launch LCD task");
+    // xTaskCreate(display_task, "LCD Task", 4096, NULL, OTTO_DISP_TASK_PRI, NULL);
 
     // COMM Receiver task
     ESP_LOGI(__func__, "Launch Comm receiver task");
-    xTaskCreate(comm_receiver_task, "Comm receiver Task", 2048, NULL, OTTO_COMM_RECEIVER_TASK_PRI, NULL);
+    xTaskCreate(comm_receiver_task, "Comm receiver Task", 4096, NULL, OTTO_COMM_RECEIVER_TASK_PRI, NULL);
 
     // COMM Sender task
     ESP_LOGI(__func__, "Launch Comm sender task");
-    xTaskCreate(comm_sender_task, "Comm sender Task", 2048, NULL, OTTO_COMM_SENDER_TASK_PRI, NULL);
+    xTaskCreate(comm_sender_task, "Comm sender Task", 4096, NULL, OTTO_COMM_SENDER_TASK_PRI, NULL);
 
     // Motor task
     ESP_LOGI(__func__, "Launch motor task");
-    xTaskCreate(motor_task, "motor Task", 2048, NULL, OTTO_MOTOR_TASK_PRI, NULL);
+    xTaskCreate(motor_task, "motor Task", 4096, NULL, OTTO_MOTOR_TASK_PRI, NULL);
 
     // Clean up init task
     vTaskDelete(NULL);
@@ -206,10 +208,28 @@ void comm_receiver_task(void *param) {
 
     while (1) {
         // const int rxBytes = uartWired.receiveData(commandDataPacket, sizeof(Command_Data_Packet));
-        int readBytes = uart_read_bytes(UART_NUM_0, (void*) &commandDataPacket, sizeof(Command_Data_Packet), portMAX_DELAY);
-        if (readBytes == sizeof(Command_Data_Packet)) {
+        uint8_t headerByte;
+
+        while (1) {
+            uart_read_bytes(UART_NUM_0, (void*) &headerByte, sizeof(headerByte), portMAX_DELAY);
+            if (headerByte == HEADER_BYTE1) {
+                uart_read_bytes(UART_NUM_0, (void*) &headerByte, sizeof(headerByte), portMAX_DELAY);
+                if (headerByte == HEADER_BYTE2) {
+                    uart_read_bytes(UART_NUM_0, (void*) &headerByte, sizeof(headerByte), portMAX_DELAY);
+                    if (headerByte == HEADER_BYTE3) {
+                        uart_read_bytes(UART_NUM_0, (void*) &headerByte, sizeof(headerByte), portMAX_DELAY);
+                        if (headerByte == HEADER_BYTE4) {
+                            break;
+                        }
+                    }
+                }
+            }  
+        }
+
+        int readBytes = uart_read_bytes(UART_NUM_0, (void*) &commandData, sizeof(commandData), portMAX_DELAY);
+        if (readBytes == sizeof(commandData)) {
             // todo: add checking for header, CRC, ... to check the correctness of the packet
-            commandData = commandDataPacket.commandData;
+            // commandData = commandDataPacket.commandData;
             if (xQueueSendToBack( dataInQueue, (void*) &commandData, ( TickType_t ) 0 ) != pdPASS )
             {
                 ESP_LOGI(__func__, "Comm receiver Task: queue full");
@@ -294,11 +314,13 @@ void motor_task(void *param) {
     ESP_ERROR_CHECK(ops_wheel.configIO(motor_pin));
     Command_Data commandData;
     while(1) {
-        if( xQueueReceive( dataInQueue, (void*) &( commandData ), pdMS_TO_TICKS( 10 ) ) ) {
+        if( xQueueReceive( dataInQueue, (void*) &( commandData ), portMAX_DELAY) ) {
             ESP_LOGE(__func__, "motor_task received");
             // todo: use the data to drive the motor accordingly;
-            ESP_ERROR_CHECK(ref_wheel.setFixed(commandData.angleRotatedLeftMotor, commandData.leftAngularVelo);
-            ESP_ERROR_CHECK(ops_wheel.setFixed(commandData.angleRotatedRightMotor, commandData.rightAngularVelo));
+            ESP_LOGE(__func__, "commandData.leftAngularVelo: %f", commandData.leftAngularVelo);
+            ESP_LOGE(__func__, "commandData.rightAngularVelo: %f", commandData.rightAngularVelo);
+            ESP_ERROR_CHECK(ref_wheel.setContinuous(commandData.leftAngularVelo));
+            ESP_ERROR_CHECK(ops_wheel.setContinuous(commandData.rightAngularVelo));
         }
     }
 }

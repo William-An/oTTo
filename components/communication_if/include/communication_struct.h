@@ -1,6 +1,10 @@
 static const int RX_BUF_SIZE = 1024;
 
 const uint32_t HEADER = 0x92384233;
+const uint8_t HEADER_BYTE1 = 0x33;
+const uint8_t HEADER_BYTE2 = 0x42;
+const uint8_t HEADER_BYTE3 = 0x38;
+const uint8_t HEADER_BYTE4 = 0x92;
 // const uint32_t COMMAND_DATA_SIZE = 16;
 // const uint32_t COMMAND_DATA_PACKET_SIZE = 32;
 // const uint32_t FEEDBACK_DATA_SIZE = 28;
