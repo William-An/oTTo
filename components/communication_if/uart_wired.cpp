@@ -14,8 +14,8 @@ UartWired :: UartWired(bool debugMode) {
         .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
         .source_clk = UART_SCLK_APB,
     };
-    // We won't use a buffer for sending data.
-    uart_driver_install(UART_NUM_0, RX_BUF_SIZE * 2, 0, 0, NULL, 0);
+    
+    uart_driver_install(UART_NUM_0, RX_BUF_SIZE * 2, TX_BUF_SIZE * 2, 0, NULL, 0);
     uart_param_config(UART_NUM_0, &uart_config);
     uart_set_pin(0, 1, 3, -1, -1);
 }

@@ -106,34 +106,34 @@ void otto_init(void *param) {
 
     // data in queue initialization
     ESP_LOGI(__func__, "Init data in Queue");
-    dataInQueue = xQueueCreate(OTTO_DATA_IN_QUEUE_LEN, sizeof(Command_Data_Packet));
+    dataInQueue = xQueueCreate(OTTO_DATA_IN_QUEUE_LEN, sizeof(Command_Data));
 
     // data out queue initialization
     ESP_LOGI(__func__, "Init data out Queue");
-    dataOutQueue = xQueueCreate(OTTO_DATA_OUT_QUEUE_LEN, sizeof(Feedback_Data_Packet));
+    dataOutQueue = xQueueCreate(OTTO_DATA_OUT_QUEUE_LEN, sizeof(Feedback_Data));
 
     // Start subsystem tasks
     // IMU task
     // Pin IMU task to APP_CPU per ESP32 Guidelines: 
     //  https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/freertos-smp.html#floating-points
-    // ESP_LOGI(__func__, "Launch IMU task");
-    // xTaskCreatePinnedToCore(imu_task, "IMU Task", 4096, NULL, OTTO_IMU_TASK_PRI, NULL, APP_CPU_NUM);
+    ESP_LOGI(__func__, "Launch IMU task");
+    xTaskCreatePinnedToCore(imu_task, "IMU Task", 8192, NULL, OTTO_IMU_TASK_PRI, NULL, APP_CPU_NUM);
 
     // LCD task
     // ESP_LOGI(__func__, "Launch LCD task");
     // xTaskCreate(display_task, "LCD Task", 4096, NULL, OTTO_DISP_TASK_PRI, NULL);
 
-    // COMM Receiver task
-    ESP_LOGI(__func__, "Launch Comm receiver task");
-    xTaskCreate(comm_receiver_task, "Comm receiver Task", 4096, NULL, OTTO_COMM_RECEIVER_TASK_PRI, NULL);
+    // Motor task
+    ESP_LOGI(__func__, "Launch motor task");
+    xTaskCreate(motor_task, "motor Task", 4096, NULL, OTTO_MOTOR_TASK_PRI, NULL);
 
     // COMM Sender task
     ESP_LOGI(__func__, "Launch Comm sender task");
     xTaskCreate(comm_sender_task, "Comm sender Task", 4096, NULL, OTTO_COMM_SENDER_TASK_PRI, NULL);
 
-    // Motor task
-    ESP_LOGI(__func__, "Launch motor task");
-    xTaskCreate(motor_task, "motor Task", 4096, NULL, OTTO_MOTOR_TASK_PRI, NULL);
+    // COMM Receiver task
+    ESP_LOGI(__func__, "Launch Comm receiver task");
+    xTaskCreate(comm_receiver_task, "Comm receiver Task", 4096, NULL, OTTO_COMM_RECEIVER_TASK_PRI, NULL);
 
     // Clean up init task
     vTaskDelete(NULL);
@@ -186,7 +186,7 @@ void imu_task(void *param) {
 
         // Send data onto queue, not waiting for slot as can just
         // use next measurement
-        if (xQueueSendToBack(dataOutQueue, &feedbackData, 0) == errQUEUE_FULL) {
+        if (xQueueSendToBack(dataOutQueue, &feedbackData, portMAX_DELAY) == errQUEUE_FULL) {
             ESP_LOGW(__func__, "IMU Queue full, cannot send");
         }
     }
@@ -206,19 +206,25 @@ void comm_receiver_task(void *param) {
     Command_Data_Packet commandDataPacket;
     Command_Data commandData;
 
+    // Flush current fifo before processing
+    ESP_ERROR_CHECK(uart_flush(UART_NUM_0));
     while (1) {
         // const int rxBytes = uartWired.receiveData(commandDataPacket, sizeof(Command_Data_Packet));
         uint8_t headerByte;
 
         while (1) {
-            uart_read_bytes(UART_NUM_0, (void*) &headerByte, sizeof(headerByte), portMAX_DELAY);
+            int length = 0;
+            ESP_ERROR_CHECK(uart_get_buffered_data_len(UART_NUM_0, (size_t*)&length));
+            ESP_LOGI(__func__, "Buffer size: %d", length);
+            uart_read_bytes(UART_NUM_0, &headerByte, sizeof(headerByte), portMAX_DELAY);
             if (headerByte == HEADER_BYTE1) {
-                uart_read_bytes(UART_NUM_0, (void*) &headerByte, sizeof(headerByte), portMAX_DELAY);
+                uart_read_bytes(UART_NUM_0, &headerByte, sizeof(headerByte), portMAX_DELAY);
                 if (headerByte == HEADER_BYTE2) {
-                    uart_read_bytes(UART_NUM_0, (void*) &headerByte, sizeof(headerByte), portMAX_DELAY);
+                    uart_read_bytes(UART_NUM_0, &headerByte, sizeof(headerByte), portMAX_DELAY);
                     if (headerByte == HEADER_BYTE3) {
-                        uart_read_bytes(UART_NUM_0, (void*) &headerByte, sizeof(headerByte), portMAX_DELAY);
+                        uart_read_bytes(UART_NUM_0, &headerByte, sizeof(headerByte), portMAX_DELAY);
                         if (headerByte == HEADER_BYTE4) {
+                            headerByte = 0;
                             break;
                         }
                     }
@@ -226,12 +232,12 @@ void comm_receiver_task(void *param) {
             }  
         }
 
-        int readBytes = uart_read_bytes(UART_NUM_0, (void*) &commandData, sizeof(commandData), portMAX_DELAY);
+        int readBytes = uart_read_bytes(UART_NUM_0, &commandData, sizeof(commandData), portMAX_DELAY);
         if (readBytes == sizeof(commandData)) {
             // todo: add checking for header, CRC, ... to check the correctness of the packet
             // commandData = commandDataPacket.commandData;
-            if (xQueueSendToBack( dataInQueue, (void*) &commandData, ( TickType_t ) 0 ) != pdPASS )
-            {
+            ESP_LOGI(__func__, "Comm receiver Task: received one packet: omega_left: %.2f", commandData.leftAngularVelo);
+            if (xQueueSendToBack( dataInQueue, &commandData, ( TickType_t ) 0 ) != pdPASS ) {
                 ESP_LOGI(__func__, "Comm receiver Task: queue full");
             }
         }
@@ -253,13 +259,13 @@ void comm_sender_task(void *param) {
     Feedback_Data_Packet feedbackDataPacket;
 
     while (1) {
-        if( xQueueReceive( dataOutQueue, (void*) &feedbackData, portMAX_DELAY ) == pdTRUE) {
+        if( xQueueReceive( dataOutQueue, &feedbackData, portMAX_DELAY ) == pdTRUE) {
             feedbackDataPacket.CRC = 0; // TODO: 
             feedbackDataPacket.header = HEADER;
             feedbackDataPacket.feedBackData = feedbackData;
             feedbackDataPacket.timestamp = 0; // TODO: 
             // uartWired.sendData(feedbackDataPacket, sizeof(Feedback_Data_Packet));
-            uart_write_bytes(UART_NUM_0, (void*) &feedbackDataPacket, sizeof(Feedback_Data_Packet));
+            uart_write_bytes(UART_NUM_0, &feedbackDataPacket, sizeof(Feedback_Data_Packet));
         }
     }
 
@@ -297,30 +303,34 @@ void motor_task(void *param) {
     A4988_Driver ops_wheel (SIXTEENTH_STEP, OPPOSITE, nema17);
 
     MotorIOConfig_t motor_pin;
-    motor_pin.step = GPIO_NUM_18;
-    motor_pin.en = GPIO_NUM_3;
-    motor_pin.dir = GPIO_NUM_4;
-    motor_pin.ms1 = GPIO_NUM_25;
-    motor_pin.ms2 = GPIO_NUM_26;
-    motor_pin.ms3 = GPIO_NUM_27;
+    motor_pin.step = GPIO_NUM_25;
+    motor_pin.en = GPIO_NUM_33;
+    motor_pin.dir = GPIO_NUM_32;
+    // TODO Connect the following pins to VCC
+    // motor_pin.ms1 = GPIO_NUM_25;
+    // motor_pin.ms2 = GPIO_NUM_26;
+    // motor_pin.ms3 = GPIO_NUM_27;
     ESP_ERROR_CHECK(ref_wheel.configIO(motor_pin));
 
-    motor_pin.step = GPIO_NUM_33;
-    motor_pin.dir = GPIO_NUM_26;
-    motor_pin.en = GPIO_NUM_3;
-    motor_pin.ms1 = GPIO_NUM_12;
-    motor_pin.ms2 = GPIO_NUM_13;
-    motor_pin.ms3 = GPIO_NUM_14;
+    motor_pin.step = GPIO_NUM_4;
+    motor_pin.en = GPIO_NUM_18;
+    motor_pin.dir = GPIO_NUM_19;
+    // TODO Connect the following pins to VCC
+    // motor_pin.ms1 = GPIO_NUM_12;
+    // motor_pin.ms2 = GPIO_NUM_13;
+    // motor_pin.ms3 = GPIO_NUM_14;
     ESP_ERROR_CHECK(ops_wheel.configIO(motor_pin));
     Command_Data commandData;
     while(1) {
-        if( xQueueReceive( dataInQueue, (void*) &( commandData ), portMAX_DELAY) ) {
-            ESP_LOGE(__func__, "motor_task received");
+        if( xQueueReceive( dataInQueue, &commandData, portMAX_DELAY) == pdTRUE ) {
+            ESP_LOGI(__func__, "motor_task received command");
             // todo: use the data to drive the motor accordingly;
-            ESP_LOGE(__func__, "commandData.leftAngularVelo: %f", commandData.leftAngularVelo);
-            ESP_LOGE(__func__, "commandData.rightAngularVelo: %f", commandData.rightAngularVelo);
+            ESP_LOGI(__func__, "commandData.leftAngularVelo: %f", commandData.leftAngularVelo);
+            ESP_LOGI(__func__, "commandData.rightAngularVelo: %f", commandData.rightAngularVelo);
             ESP_ERROR_CHECK(ref_wheel.setContinuous(commandData.leftAngularVelo));
             ESP_ERROR_CHECK(ops_wheel.setContinuous(commandData.rightAngularVelo));
+        } else {
+            ESP_LOGW(__func__, "fail to retrieve item for motor");
         }
     }
 }
