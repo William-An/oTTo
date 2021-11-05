@@ -25,6 +25,7 @@
 #include "otto.h"
 #include "motor_driver.h"
 #include "motor_stepper.h"
+#include "test_motor.h"
 
 extern "C" void app_main(void);
 
@@ -69,6 +70,7 @@ void app_main(void)
     // Init task need to have to priority to ensure the
     // rest tasks can be properly initated
     xTaskCreate(otto_init, "OTTO Init task", 2048, NULL, OTTO_INIT_TASK_PRI, NULL);
+    // test_stepper();
 }
 
 /**
@@ -303,22 +305,22 @@ void motor_task(void *param) {
     A4988_Driver ops_wheel (SIXTEENTH_STEP, OPPOSITE, nema17);
 
     MotorIOConfig_t motor_pin;
-    motor_pin.step = GPIO_NUM_25;
+    motor_pin.step = GPIO_NUM_32;
     motor_pin.en = GPIO_NUM_33;
-    motor_pin.dir = GPIO_NUM_32;
+    motor_pin.dir = GPIO_NUM_25;
     // TODO Connect the following pins to VCC
-    // motor_pin.ms1 = GPIO_NUM_25;
-    // motor_pin.ms2 = GPIO_NUM_26;
-    // motor_pin.ms3 = GPIO_NUM_27;
+    motor_pin.ms1 = GPIO_NUM_33;
+    motor_pin.ms2 = GPIO_NUM_33;
+    motor_pin.ms3 = GPIO_NUM_33;
     ESP_ERROR_CHECK(ref_wheel.configIO(motor_pin));
 
-    motor_pin.step = GPIO_NUM_4;
+    motor_pin.step = GPIO_NUM_19;
     motor_pin.en = GPIO_NUM_18;
-    motor_pin.dir = GPIO_NUM_19;
+    motor_pin.dir = GPIO_NUM_4;
     // TODO Connect the following pins to VCC
-    // motor_pin.ms1 = GPIO_NUM_12;
-    // motor_pin.ms2 = GPIO_NUM_13;
-    // motor_pin.ms3 = GPIO_NUM_14;
+    motor_pin.ms1 = GPIO_NUM_33;
+    motor_pin.ms2 = GPIO_NUM_33;
+    motor_pin.ms3 = GPIO_NUM_33;
     ESP_ERROR_CHECK(ops_wheel.configIO(motor_pin));
     Command_Data commandData;
     while(1) {

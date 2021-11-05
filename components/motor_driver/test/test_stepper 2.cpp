@@ -6,7 +6,7 @@
 #include "motor_driver.h"
 #include "motor_stepper.h"
 
-void test_stepper(void)
+void test_stepper2(void)
 {
     printf("Hello world!\n");
 

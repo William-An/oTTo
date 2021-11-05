@@ -35,17 +35,17 @@ void test_stepper(void)
     A4988_Driver ops_wheel (SIXTEENTH_STEP, OPPOSITE, nema17);
 
     MotorIOConfig_t motor_pin;
-    motor_pin.step = GPIO_NUM_18;
-    motor_pin.en = GPIO_NUM_3;
-    motor_pin.dir = GPIO_NUM_4;
-    motor_pin.ms1 = GPIO_NUM_25;
-    motor_pin.ms2 = GPIO_NUM_26;
-    motor_pin.ms3 = GPIO_NUM_27;
+    motor_pin.step = GPIO_NUM_32;
+    motor_pin.en = GPIO_NUM_33;
+    motor_pin.dir = GPIO_NUM_25;
+    motor_pin.ms1 = GPIO_NUM_21;
+    motor_pin.ms2 = GPIO_NUM_22;
+    motor_pin.ms3 = GPIO_NUM_23;
     ESP_ERROR_CHECK(ref_wheel.configIO(motor_pin));
 
-    motor_pin.step = GPIO_NUM_33;
-    motor_pin.dir = GPIO_NUM_26;
-    motor_pin.en = GPIO_NUM_3;
+    motor_pin.step = GPIO_NUM_19;
+    motor_pin.en = GPIO_NUM_18;
+    motor_pin.dir = GPIO_NUM_4;
     motor_pin.ms1 = GPIO_NUM_12;
     motor_pin.ms2 = GPIO_NUM_13;
     motor_pin.ms3 = GPIO_NUM_14;
