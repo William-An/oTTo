@@ -71,7 +71,7 @@ void app_main(void)
     ESP_LOGI(TAG, "INIT");
     i2c_init(OTTO_I2C_PORT_NUM);
     ESP_LOGI(TAG, "LCD init");
-    LCD1602 lcd(0b0100000);
+    LCD1602 lcd(0b0100000,0b0100111);
     ESP_LOGI(TAG, "begin");
     ESP_ERROR_CHECK(lcd.begin(OTTO_I2C_PORT_NUM));
     // ESP_LOGI(TAG, "RESET");
