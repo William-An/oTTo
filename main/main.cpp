@@ -26,7 +26,7 @@
 #include "motor_driver.h"
 #include "motor_stepper.h"
 #include "test_motor.h"
-
+#include "lcd1602.h"
 extern "C" void app_main(void);
 
 static QueueHandle_t dataInQueue;
@@ -118,12 +118,12 @@ void otto_init(void *param) {
     // IMU task
     // Pin IMU task to APP_CPU per ESP32 Guidelines: 
     //  https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/freertos-smp.html#floating-points
-    ESP_LOGI(__func__, "Launch IMU task");
-    xTaskCreatePinnedToCore(imu_task, "IMU Task", 8192, NULL, OTTO_IMU_TASK_PRI, NULL, APP_CPU_NUM);
+    //ESP_LOGI(__func__, "Launch IMU task");
+    //xTaskCreatePinnedToCore(imu_task, "IMU Task", 8192, NULL, OTTO_IMU_TASK_PRI, NULL, APP_CPU_NUM);
 
     // LCD task
-    // ESP_LOGI(__func__, "Launch LCD task");
-    // xTaskCreate(display_task, "LCD Task", 4096, NULL, OTTO_DISP_TASK_PRI, NULL);
+     ESP_LOGI(__func__, "Launch LCD task");
+     xTaskCreate(display_task, "LCD Task", 4096, NULL, OTTO_DISP_TASK_PRI, NULL);
 
     // Motor task
     ESP_LOGI(__func__, "Launch motor task");
@@ -282,10 +282,15 @@ void comm_sender_task(void *param) {
  */
 void display_task(void *param) {
     Command_Data commandData;
+    LCD1602 lcd(0b0100000);
+    ESP_ERROR_CHECK(lcd.begin(OTTO_I2C_PORT_NUM));
     while(1) {
         if( xQueuePeek( dataInQueue, (void*) &( commandData ), pdMS_TO_TICKS( 100 ) ) ) {
             // ESP_LOGE(__func__, "received. %f", commandData);
             // todo: display the received data
+            char str[100];
+            sprintf(str,"%f",commandData.leftAngularVelo);
+            lcd.write_string(str);
         }
 
         // todo: check button status
