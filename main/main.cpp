@@ -74,18 +74,5 @@ void app_main(void)
     LCD1602 lcd(0b0100000,0b0100111);
     ESP_LOGI(TAG, "begin");
     ESP_ERROR_CHECK(lcd.begin(OTTO_I2C_PORT_NUM));
-    // ESP_LOGI(TAG, "RESET");
-    // ESP_ERROR_CHECK(lcd.reset());
-    // ESP_LOGI(TAG, "HOME");
-    // ESP_ERROR_CHECK(lcd.home());
-    // ESP_LOGI(TAG, "MOVE CURSOR");
-    // ESP_ERROR_CHECK(lcd.move_cursor(0, 0));
-    // ESP_LOGI(TAG, "WRITE A");
-    // ESP_ERROR_CHECK(lcd.write_char('A'));
 
-    // for(;;) {
-    //     ESP_LOGI(TAG, "WRITE A");
-    //     ESP_ERROR_CHECK(lcd.write_char('A'));
-    //     vTaskDelay(1000 / portTICK_RATE_MS);
-    // }
 }
