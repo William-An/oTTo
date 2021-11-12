@@ -13,6 +13,7 @@
 #include <math.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "esp_app_trace.h"
 #include "esp_log.h"
 #include "esp_system.h"
 #include "esp_spi_flash.h"
@@ -38,8 +39,6 @@
 /**
  * @brief Init I2C port
  * 
- * @param i2c_portNum 
- * @return esp_err_t 
  */
 esp_err_t i2c_init(uint8_t i2c_portNum) {
     // Default ICM 20948 I2C config
@@ -74,5 +73,4 @@ void app_main(void)
     LCD1602 lcd(0b0100000,0b0100111);
     ESP_LOGI(TAG, "begin");
     ESP_ERROR_CHECK(lcd.begin(OTTO_I2C_PORT_NUM));
-
 }
