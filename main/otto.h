@@ -41,7 +41,7 @@
 #define OTTO_DISP_TASK_PRI  OTTO_TASK_PRI_8
 // OTTO Queue configs
 #define OTTO_DATA_IN_QUEUE_LEN  10
-#define OTTO_DATA_OUT_QUEUE_LEN  10
+#define OTTO_DATA_OUT_QUEUE_LEN  20
 
 
 
