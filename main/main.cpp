@@ -118,12 +118,12 @@ void otto_init(void *param) {
     // IMU task
     // Pin IMU task to APP_CPU per ESP32 Guidelines: 
     //  https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/freertos-smp.html#floating-points
-    //ESP_LOGI(__func__, "Launch IMU task");
-    //xTaskCreatePinnedToCore(imu_task, "IMU Task", 8192, NULL, OTTO_IMU_TASK_PRI, NULL, APP_CPU_NUM);
+    ESP_LOGI(__func__, "Launch IMU task");
+    xTaskCreatePinnedToCore(imu_task, "IMU Task", 8192, NULL, OTTO_IMU_TASK_PRI, NULL, APP_CPU_NUM);
 
     // LCD task
      ESP_LOGI(__func__, "Launch LCD task");
-     xTaskCreate(display_task, "LCD Task", 4096, NULL, OTTO_DISP_TASK_PRI, NULL);
+    //  xTaskCreate(display_task, "LCD Task", 4096, NULL, OTTO_DISP_TASK_PRI, NULL);
 
     // Motor task
     ESP_LOGI(__func__, "Launch motor task");
