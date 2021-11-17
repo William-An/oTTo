@@ -102,10 +102,6 @@ void otto_init(void *param) {
     // Get Mac addr
     ESP_ERROR_CHECK(get_macAddr());
 
-    // Communication initialization
-    ESP_LOGI(__func__, "Init communication with UART");
-    UartWired uartWired(false);
-
     // data in queue initialization
     ESP_LOGI(__func__, "Init data in Queue");
     dataInQueue = xQueueCreate(OTTO_DATA_IN_QUEUE_LEN, sizeof(Command_Data));
@@ -122,13 +118,17 @@ void otto_init(void *param) {
     xTaskCreatePinnedToCore(imu_task, "IMU Task", 8192, NULL, OTTO_IMU_TASK_PRI, NULL, APP_CPU_NUM);
 
     // LCD task
-     ESP_LOGI(__func__, "Launch LCD task");
-    //  xTaskCreate(display_task, "LCD Task", 4096, NULL, OTTO_DISP_TASK_PRI, NULL);
+    // ESP_LOGI(__func__, "Launch LCD task");
+    // xTaskCreate(display_task, "LCD Task", 4096, NULL, OTTO_DISP_TASK_PRI, NULL);
 
     // Motor task
     ESP_LOGI(__func__, "Launch motor task");
     xTaskCreate(motor_task, "motor Task", 4096, NULL, OTTO_MOTOR_TASK_PRI, NULL);
 
+    // Communication initialization
+    ESP_LOGI(__func__, "Init communication with UART");
+    UartWired uartWired(false);
+    
     // COMM Sender task
     ESP_LOGI(__func__, "Launch Comm sender task");
     xTaskCreate(comm_sender_task, "Comm sender Task", 4096, NULL, OTTO_COMM_SENDER_TASK_PRI, NULL);
