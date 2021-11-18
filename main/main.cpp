@@ -41,32 +41,32 @@ void app_main(void)
     // Init console output
     // ASCII Art from https://patorjk.com/software/taag/#p=display&f=Isometric1&t=oTTo%0ArOBOT
     // Shows "OTTO ROBOT"
-    printf("      ___           ___           ___           ___                    \n");
-    printf("     /\\  \\         /\\  \\         /\\  \\         /\\  \\                   \n");
-    printf("    /::\\  \\        \\:\\  \\        \\:\\  \\       /::\\  \\                  \n");
-    printf("   /:/\\:\\  \\        \\:\\  \\        \\:\\  \\     /:/\\:\\  \\                 \n");
-    printf("  /:/  \\:\\  \\       /::\\  \\       /::\\  \\   /:/  \\:\\  \\                \n");
-    printf(" /:/__/ \\:\\__\\     /:/\\:\\__\\     /:/\\:\\__\\ /:/__/ \\:\\__\\               \n");
-    printf(" \\:\\  \\ /:/  /    /:/  \\/__/    /:/  \\/__/ \\:\\  \\ /:/  /               \n");
-    printf("  \\:\\  /:/  /    /:/  /        /:/  /       \\:\\  /:/  /                \n");
-    printf("   \\:\\/:/  /     \\/__/         \\/__/         \\:\\/:/  /                 \n");
-    printf("    \\::/  /                                   \\::/  /                  \n");
-    printf("     \\/__/                                     \\/__/                   \n");
-    printf("      ___           ___           ___           ___           ___      \n");
-    printf("     /\\  \\         /\\  \\         /\\  \\         /\\  \\         /\\  \\     \n");
-    printf("    /::\\  \\       /::\\  \\       /::\\  \\       /::\\  \\        \\:\\  \\    \n");
-    printf("   /:/\\:\\  \\     /:/\\:\\  \\     /:/\\:\\  \\     /:/\\:\\  \\        \\:\\  \\   \n");
-    printf("  /::\\~\\:\\  \\   /:/  \\:\\  \\   /::\\~\\:\\__\\   /:/  \\:\\  \\       /::\\  \\  \n");
-    printf(" /:/\\:\\ \\:\\__\\ /:/__/ \\:\\__\\ /:/\\:\\ \\:|__| /:/__/ \\:\\__\\     /:/\\:\\__\\ \n");
-    printf(" \\/_|::\\/:/  / \\:\\  \\ /:/  / \\:\\~\\:\\/:/  / \\:\\  \\ /:/  /    /:/  \\/__/ \n");
-    printf("    |:|::/  /   \\:\\  /:/  /   \\:\\ \\::/  /   \\:\\  /:/  /    /:/  /      \n");
-    printf("    |:|\\/__/     \\:\\/:/  /     \\:\\/:/  /     \\:\\/:/  /     \\/__/       \n");
-    printf("    |:|  |        \\::/  /       \\::/__/       \\::/  /                  \n");
-    printf("     \\|__|         \\/__/         ~~            \\/__/                   \n");   
-    printf("\n");
+    // printf("      ___           ___           ___           ___                    \n");
+    // printf("     /\\  \\         /\\  \\         /\\  \\         /\\  \\                   \n");
+    // printf("    /::\\  \\        \\:\\  \\        \\:\\  \\       /::\\  \\                  \n");
+    // printf("   /:/\\:\\  \\        \\:\\  \\        \\:\\  \\     /:/\\:\\  \\                 \n");
+    // printf("  /:/  \\:\\  \\       /::\\  \\       /::\\  \\   /:/  \\:\\  \\                \n");
+    // printf(" /:/__/ \\:\\__\\     /:/\\:\\__\\     /:/\\:\\__\\ /:/__/ \\:\\__\\               \n");
+    // printf(" \\:\\  \\ /:/  /    /:/  \\/__/    /:/  \\/__/ \\:\\  \\ /:/  /               \n");
+    // printf("  \\:\\  /:/  /    /:/  /        /:/  /       \\:\\  /:/  /                \n");
+    // printf("   \\:\\/:/  /     \\/__/         \\/__/         \\:\\/:/  /                 \n");
+    // printf("    \\::/  /                                   \\::/  /                  \n");
+    // printf("     \\/__/                                     \\/__/                   \n");
+    // printf("      ___           ___           ___           ___           ___      \n");
+    // printf("     /\\  \\         /\\  \\         /\\  \\         /\\  \\         /\\  \\     \n");
+    // printf("    /::\\  \\       /::\\  \\       /::\\  \\       /::\\  \\        \\:\\  \\    \n");
+    // printf("   /:/\\:\\  \\     /:/\\:\\  \\     /:/\\:\\  \\     /:/\\:\\  \\        \\:\\  \\   \n");
+    // printf("  /::\\~\\:\\  \\   /:/  \\:\\  \\   /::\\~\\:\\__\\   /:/  \\:\\  \\       /::\\  \\  \n");
+    // printf(" /:/\\:\\ \\:\\__\\ /:/__/ \\:\\__\\ /:/\\:\\ \\:|__| /:/__/ \\:\\__\\     /:/\\:\\__\\ \n");
+    // printf(" \\/_|::\\/:/  / \\:\\  \\ /:/  / \\:\\~\\:\\/:/  / \\:\\  \\ /:/  /    /:/  \\/__/ \n");
+    // printf("    |:|::/  /   \\:\\  /:/  /   \\:\\ \\::/  /   \\:\\  /:/  /    /:/  /      \n");
+    // printf("    |:|\\/__/     \\:\\/:/  /     \\:\\/:/  /     \\:\\/:/  /     \\/__/       \n");
+    // printf("    |:|  |        \\::/  /       \\::/__/       \\::/  /                  \n");
+    // printf("     \\|__|         \\/__/         ~~            \\/__/                   \n");   
+    // printf("\n");
     printf("Developed by Weili An, Xin Du, Yuqing Fan, Ruichao Zhang at Purdue University\n");
-    printf("Current version: v0.0.1a\n"); 
-    printf("\n");           
+    // printf("Current version: v0.0.1a\n"); 
+    // printf("\n");           
     // Init task need to have to priority to ensure the
     // rest tasks can be properly initated
     xTaskCreate(otto_init, "OTTO Init task", 2048, NULL, OTTO_INIT_TASK_PRI, NULL);
@@ -122,8 +122,8 @@ void otto_init(void *param) {
     // xTaskCreate(display_task, "LCD Task", 4096, NULL, OTTO_DISP_TASK_PRI, NULL);
 
     // Motor task
-    ESP_LOGI(__func__, "Launch motor task");
-    xTaskCreate(motor_task, "motor Task", 4096, NULL, OTTO_MOTOR_TASK_PRI, NULL);
+    // ESP_LOGI(__func__, "Launch motor task");
+    xTaskCreatePinnedToCore(motor_task, "motor Task", 4096, NULL, OTTO_MOTOR_TASK_PRI, NULL, PRO_CPU_NUM);
 
     // Communication initialization
     ESP_LOGI(__func__, "Init communication with UART");
@@ -165,7 +165,7 @@ void imu_task(void *param) {
 
     // Init loop vars
     xLastWakeTime = xTaskGetTickCount();
-    xImuFrequency = 1000 / OTTO_IMU_RATE_HZ / portTICK_RATE_MS;
+    xImuFrequency = (1000 / OTTO_IMU_RATE_HZ) / portTICK_RATE_MS;
     ESP_LOGI(__func__, "IMU Update per %d ticks", xImuFrequency);
 
     while (1) {
@@ -214,6 +214,7 @@ void comm_receiver_task(void *param) {
         // const int rxBytes = uartWired.receiveData(commandDataPacket, sizeof(Command_Data_Packet));
         uint8_t headerByte;
 
+        // Sync header bytes
         while (1) {
             int length = 0;
             ESP_ERROR_CHECK(uart_get_buffered_data_len(UART_NUM_0, (size_t*)&length));
@@ -267,7 +268,8 @@ void comm_sender_task(void *param) {
             feedbackDataPacket.feedBackData = feedbackData;
             feedbackDataPacket.timestamp = 0; // TODO: 
             // uartWired.sendData(feedbackDataPacket, sizeof(Feedback_Data_Packet));
-            uart_write_bytes(UART_NUM_0, &feedbackDataPacket, sizeof(Feedback_Data_Packet));
+            // Hard code 44 bytes to avoid extra bytes sent to serial
+            uart_write_bytes(UART_NUM_0, &feedbackDataPacket, 44);
         }
     }
 
@@ -310,22 +312,22 @@ void motor_task(void *param) {
     A4988_Driver ops_wheel (SIXTEENTH_STEP, OPPOSITE, nema17);
 
     MotorIOConfig_t motor_pin;
-    motor_pin.step = GPIO_NUM_32;
-    motor_pin.en = GPIO_NUM_33;
-    motor_pin.dir = GPIO_NUM_25;
+    motor_pin.step = GPIO_NUM_33;
+    motor_pin.en = GPIO_NUM_25;
+    motor_pin.dir = GPIO_NUM_32;
     // TODO Connect the following pins to VCC
-    motor_pin.ms1 = GPIO_NUM_33;
-    motor_pin.ms2 = GPIO_NUM_33;
-    motor_pin.ms3 = GPIO_NUM_33;
+    motor_pin.ms1 = GPIO_NUM_32;
+    motor_pin.ms2 = GPIO_NUM_32;
+    motor_pin.ms3 = GPIO_NUM_32;
     ESP_ERROR_CHECK(ref_wheel.configIO(motor_pin));
 
-    motor_pin.step = GPIO_NUM_19;
-    motor_pin.en = GPIO_NUM_18;
-    motor_pin.dir = GPIO_NUM_4;
+    motor_pin.step = GPIO_NUM_18;
+    motor_pin.en = GPIO_NUM_4;
+    motor_pin.dir = GPIO_NUM_19;
     // TODO Connect the following pins to VCC
-    motor_pin.ms1 = GPIO_NUM_33;
-    motor_pin.ms2 = GPIO_NUM_33;
-    motor_pin.ms3 = GPIO_NUM_33;
+    motor_pin.ms1 = GPIO_NUM_32;
+    motor_pin.ms2 = GPIO_NUM_32;
+    motor_pin.ms3 = GPIO_NUM_32;
     ESP_ERROR_CHECK(ops_wheel.configIO(motor_pin));
     Command_Data commandData;
     while(1) {
