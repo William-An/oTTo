@@ -298,99 +298,97 @@ void display_task(void *param) {
              char rightang[100];
              sprintf(str,"%f",commandData.angleRotatedRightMotor);
             // lcd.write_string(str);
+            write_command("LAV"+leftvelo);
 
-    // float leftAngularVelo;
-    // float rightAngularVelo;
-    // float angleRotatedLeftMotor;
-    // float angleRotatedRightMotor;
+ 
         
-        const char *menuu[3] = { "mac address", "orientation", "motor angle", "motor velocity"};
-        const char *ori[3] = { "yaw", "pitch", "roll"};
-        const char *mac[2] = { "mac addr1", "mac addr2"};
-        const char *motor_ang[2] = { leftang, rightang};
-        const char *motor_velo[2] = { leftvelo, rightvelo};
-        const char *str = menuu[i];  
-        err = readReg(switch_addr, MCP23008_REG_GPIO, &sw_var, 1);
-        //printf("sw var%d \n",~sw_var);
-        uint8_t up = ~sw_var & 0b00001;      //gp 0
-        uint8_t down = ~sw_var & 0b00010;    //gp 1
-        uint8_t menu = ~sw_var & 0b00100;    //gp 2
-        uint8_t left = ~sw_var & 0b01000;    //gp 3
-        uint8_t right = ~sw_var & 0b10000;   //gp 4
-        if (i > 2 ){
-            i = 0;
-        }
-        if (i < 0){ 
-            i = 2;
-        }
+        // const char *menuu[3] = { "mac address", "orientation", "motor angle", "motor velocity"};
+        // const char *ori[3] = { "yaw", "pitch", "roll"};
+        // const char *mac[2] = { "mac addr1", "mac addr2"};
+        // const char *motor_ang[2] = { leftang, rightang};
+        // const char *motor_velo[2] = { leftvelo, rightvelo};
+        // const char *str = menuu[i];  
+        // err = readReg(switch_addr, MCP23008_REG_GPIO, &sw_var, 1);
+        // //printf("sw var%d \n",~sw_var);
+        // uint8_t up = ~sw_var & 0b00001;      //gp 0
+        // uint8_t down = ~sw_var & 0b00010;    //gp 1
+        // uint8_t menu = ~sw_var & 0b00100;    //gp 2
+        // uint8_t left = ~sw_var & 0b01000;    //gp 3
+        // uint8_t right = ~sw_var & 0b10000;   //gp 4
+        // if (i > 2 ){
+        //     i = 0;
+        // }
+        // if (i < 0){ 
+        //     i = 2;
+        // }
         
-        //printf("sw var%d \n up%d\n",sw_var,up);
-        //printf("buttons = up %d down %d menu %d left %d right %d \n", up, down, menu, left, right);
-        if(up){
-            printf("u");
-            err = move_cursor(0, 0);
-            const char *str = menuu[i++];
-            err = write_string(str);
+        // //printf("sw var%d \n up%d\n",sw_var,up);
+        // //printf("buttons = up %d down %d menu %d left %d right %d \n", up, down, menu, left, right);
+        // if(up){
+        //     printf("u");
+        //     err = move_cursor(0, 0);
+        //     const char *str = menuu[i++];
+        //     err = write_string(str);
         
-        }
-        if(down){
-            printf("d");
-            err = move_cursor(0, 0);
-            const char *str = menuu[i--];
-            err = write_string(str);
+        // }
+        // if(down){
+        //     printf("d");
+        //     err = move_cursor(0, 0);
+        //     const char *str = menuu[i--];
+        //     err = write_string(str);
         
-        }
-        if(menu){
-            printf("m");
-            err = move_cursor(0, 0);
-            err = clear();
-            err = write_string("Main Menu");
-            key = ~key;
-        }
-        if(left){
-            printf("l");
-            if (strcmp(str, "motor velo")){
-                err = move_cursor(0, 0);
-                err = clear();
-                const char *info = motor_velo[1];
-                err = write_string(motor_velo[0]);
-                err = move_cursor(0, 1);
-                err = write_string(motor_velo[1]);
+        // }
+        // if(menu){
+        //     printf("m");
+        //     err = move_cursor(0, 0);
+        //     err = clear();
+        //     err = write_string("Main Menu");
+        //     key = ~key;
+        // }
+        // if(left){
+        //     printf("l");
+        //     if (strcmp(str, "motor velo")){
+        //         err = move_cursor(0, 0);
+        //         err = clear();
+        //         const char *info = motor_velo[1];
+        //         err = write_string(motor_velo[0]);
+        //         err = move_cursor(0, 1);
+        //         err = write_string(motor_velo[1]);
                 
-            }
-            if (strcmp(str, "motor angle")){
-                err = move_cursor(0, 0);
-                err = clear();
-                const char *info = motor_ang[1];
-                err = write_string(motor_ang[0]);
-                err = move_cursor(0, 1);
-                err = write_string(motor_ang[1]);
+        //     }
+        //     if (strcmp(str, "motor angle")){
+        //         err = move_cursor(0, 0);
+        //         err = clear();
+        //         const char *info = motor_ang[1];
+        //         err = write_string(motor_ang[0]);
+        //         err = move_cursor(0, 1);
+        //         err = write_string(motor_ang[1]);
                 
-            }
+        //     }
 
 
         
-        }
-        if(right){
-            printf("r");
-            if (strcmp(info,motor_ang[1])){
-                err = move_cursor(0, 0);
-                err = clear();
-                err = write_string("motor angle");
-                str = "motor angle";
-                i = 2;
-            }
-            if (strcmp(info,motor_velo[1])){
-                err = move_cursor(0, 0);
-                err = clear();
-                err = write_string("motor velocity");
-                str = "motor velocity";
-                i = 3;
-            }
+        // }
+        // if(right){
+        //     printf("r");
+        //     if (strcmp(info,motor_ang[1])){
+        //         err = move_cursor(0, 0);
+        //         err = clear();
+        //         err = write_string("motor angle");
+        //         str = "motor angle";
+        //         i = 2;
+        //     }
+        //     if (strcmp(info,motor_velo[1])){
+        //         err = move_cursor(0, 0);
+        //         err = clear();
+        //         err = write_string("motor velocity");
+        //         str = "motor velocity";
+        //         i = 3;
+        //     }
 
-        }
+        // }
         
-        ets_delay_us(250000); 
+        // ets_delay_us(250000); 
         }
 
         // todo: check button status
