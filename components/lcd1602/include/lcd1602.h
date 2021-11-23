@@ -173,7 +173,7 @@ typedef enum {
 
 class LCD1602 {
     public:
-        LCD1602(uint8_t addr);
+        LCD1602(uint8_t addr, uint8_t addr2);
 
         // Init methods
         esp_err_t begin(i2c_port_t);
@@ -199,12 +199,13 @@ class LCD1602 {
         esp_err_t write_string(const char *str);
 
     private:
-        uint8_t mcp23008_addr;
+        uint8_t lcd_addr;
+        uint8_t switch_addr;
         uint8_t i2c_portNum;
-        esp_err_t readReg(uint8_t regAddr, uint8_t* data, size_t len);
+        esp_err_t readReg(uint8_t mcp_addr, uint8_t regAddr, uint8_t* data, size_t len);
         // Future: Multiple bytes write support
-        esp_err_t writeReg(uint8_t regAddr, uint8_t data);
-        esp_err_t maskWriteReg(uint8_t regAddr, uint8_t regMask,uint8_t data, bool clearMasked);
+        esp_err_t writeReg(uint8_t mcp_addr,uint8_t regAddr, uint8_t data);
+        esp_err_t maskWriteReg(uint8_t mcp_addr,uint8_t regAddr, uint8_t regMask,uint8_t data, bool clearMasked);
 
         esp_err_t strobe_enable(uint8_t data);
         esp_err_t write_top_nibble(uint8_t data);

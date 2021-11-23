@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <math.h>
 #include "motor_driver.h"
 #include "motor_stepper.h"
 
@@ -42,7 +43,7 @@ esp_err_t A4988_Driver::configIO(MotorIOConfig_t motorIO) {
     this->motorIO = motorIO;
 
     // enable the desired GPIOs
-    int normalOutputSel = (1ULL << motorIO.dir) | (1ULL << motorIO.en) | 
+    uint64_t normalOutputSel = (1ULL << motorIO.dir) | (1ULL << motorIO.en) | 
                     (1ULL << motorIO.ms1) | (1ULL << motorIO.ms2)  | (1ULL << motorIO.ms3);
     
     gpio_config_t io_conf;
@@ -132,9 +133,10 @@ esp_err_t A4988_Driver::configIO(MotorIOConfig_t motorIO) {
  */
 esp_err_t A4988_Driver::setContinuous(float omega) {
     esp_err_t err = ESP_OK;
-    if (omega == 0) {
-        err = ESP_FAIL;
-        return err;
+
+    // omega = 20.0F;
+    if (omega == 0.0F) {
+        return halt();
     }
 
     err = gpio_set_level(motorIO.en, 0);
@@ -167,34 +169,39 @@ esp_err_t A4988_Driver::setContinuous(float omega) {
     stepSize = nema17.fullStep / (float)steps;
 
     float period = stepSize / abs(omega);
-    float freq = 1 / period;
+    if (period != 0.0F) {
+        float freq = ceilf(1.0 / period); // Prevent truncate to 0
 
-    // select unit and timer to be used for pwm
-    mcpwm_unit_t unit;
-    mcpwm_timer_t timer;
+        // select unit and timer to be used for pwm
+        mcpwm_unit_t unit;
+        mcpwm_timer_t timer;
 
-    if (pos == REFERECNCE) {
-        unit = MCPWM_UNIT_1;
-        timer = MCPWM_TIMER_1;
+        if (pos == REFERECNCE) {
+            unit = MCPWM_UNIT_1;
+            timer = MCPWM_TIMER_1;
+        } else {
+            unit = MCPWM_UNIT_0;
+            timer = MCPWM_TIMER_0;
+        }
+
+        // start pwm for motor rotation
+        err = mcpwm_set_frequency(unit, timer, (uint32_t) freq);
+        if (err != ESP_OK)
+            return err;
+
+        err = mcpwm_set_duty(unit, timer, MCPWM_OPR_A, 50);
+        if (err != ESP_OK)
+            return err;
+
+        err = mcpwm_start(unit, timer);
+        if (err != ESP_OK)
+            return err;
+
+        return err;
     } else {
-        unit = MCPWM_UNIT_0;
-        timer = MCPWM_TIMER_0;
+        return halt();
     }
-
-    // start pwm for motor rotation
-    err = mcpwm_set_frequency(unit, timer, freq);
-    if (err != ESP_OK)
-                return err;
-
-    err = mcpwm_set_duty(unit, timer, MCPWM_OPR_A, 50);
-    if (err != ESP_OK)
-                return err;
-
-    err = mcpwm_start(unit, timer);
-    if (err != ESP_OK)
-                return err;
-
-    return err;
+    return ESP_OK;
 }
 
 /**
@@ -218,15 +225,15 @@ esp_err_t A4988_Driver::halt() {
 
     err = mcpwm_stop(unit, timer);
     if (err != ESP_OK)
-                return err;
+        return err;
 
     err = mcpwm_set_frequency(unit, timer, 50);
     if (err != ESP_OK)
-                return err;
+        return err;
 
     err = mcpwm_set_duty(unit, timer, MCPWM_OPR_A, 0);
     if (err != ESP_OK)
-                return err;
+        return err;
     
     return err;
 }
@@ -240,16 +247,14 @@ esp_err_t A4988_Driver::halt() {
 
 esp_err_t A4988_Driver::setFixed(float angle, float omega) {
     esp_err_t err = ESP_OK;
-    float delay = angle / abs(omega);
-    err = setContinuous(omega);
-    if (err != ESP_OK)
-                return err;
+    if (omega != 0.0F) {
+        float delay = angle / abs(omega);
+        err = setContinuous(omega);
+        if (err != ESP_OK)
+            return err;
 
-    vTaskDelay(delay * 1000 / portTICK_RATE_MS);
-
-    err = halt();
-    if (err != ESP_OK)
-                return err;
-
-    return err;
+        // TODO Inexact delay
+        vTaskDelay(delay * 1000 / portTICK_RATE_MS);
+    }
+    return halt();
 }

@@ -1,5 +1,4 @@
-/************************************************************
-*
+/*
 * @file:      main.cpp
 * @author:    Weili An, Xin Du, Yuqing Fan, Ruichao Zhang
 * @email:     {an107, du201, fan230, zhan3147}@purdue.edu
@@ -45,32 +44,32 @@ void app_main(void)
     // Init console output
     // ASCII Art from https://patorjk.com/software/taag/#p=display&f=Isometric1&t=oTTo%0ArOBOT
     // Shows "OTTO ROBOT"
-    printf("      ___           ___           ___           ___                    \n");
-    printf("     /\\  \\         /\\  \\         /\\  \\         /\\  \\                   \n");
-    printf("    /::\\  \\        \\:\\  \\        \\:\\  \\       /::\\  \\                  \n");
-    printf("   /:/\\:\\  \\        \\:\\  \\        \\:\\  \\     /:/\\:\\  \\                 \n");
-    printf("  /:/  \\:\\  \\       /::\\  \\       /::\\  \\   /:/  \\:\\  \\                \n");
-    printf(" /:/__/ \\:\\__\\     /:/\\:\\__\\     /:/\\:\\__\\ /:/__/ \\:\\__\\               \n");
-    printf(" \\:\\  \\ /:/  /    /:/  \\/__/    /:/  \\/__/ \\:\\  \\ /:/  /               \n");
-    printf("  \\:\\  /:/  /    /:/  /        /:/  /       \\:\\  /:/  /                \n");
-    printf("   \\:\\/:/  /     \\/__/         \\/__/         \\:\\/:/  /                 \n");
-    printf("    \\::/  /                                   \\::/  /                  \n");
-    printf("     \\/__/                                     \\/__/                   \n");
-    printf("      ___           ___           ___           ___           ___      \n");
-    printf("     /\\  \\         /\\  \\         /\\  \\         /\\  \\         /\\  \\     \n");
-    printf("    /::\\  \\       /::\\  \\       /::\\  \\       /::\\  \\        \\:\\  \\    \n");
-    printf("   /:/\\:\\  \\     /:/\\:\\  \\     /:/\\:\\  \\     /:/\\:\\  \\        \\:\\  \\   \n");
-    printf("  /::\\~\\:\\  \\   /:/  \\:\\  \\   /::\\~\\:\\__\\   /:/  \\:\\  \\       /::\\  \\  \n");
-    printf(" /:/\\:\\ \\:\\__\\ /:/__/ \\:\\__\\ /:/\\:\\ \\:|__| /:/__/ \\:\\__\\     /:/\\:\\__\\ \n");
-    printf(" \\/_|::\\/:/  / \\:\\  \\ /:/  / \\:\\~\\:\\/:/  / \\:\\  \\ /:/  /    /:/  \\/__/ \n");
-    printf("    |:|::/  /   \\:\\  /:/  /   \\:\\ \\::/  /   \\:\\  /:/  /    /:/  /      \n");
-    printf("    |:|\\/__/     \\:\\/:/  /     \\:\\/:/  /     \\:\\/:/  /     \\/__/       \n");
-    printf("    |:|  |        \\::/  /       \\::/__/       \\::/  /                  \n");
-    printf("     \\|__|         \\/__/         ~~            \\/__/                   \n");   
-    printf("\n");
-    printf("Developed by Weili An, Xin Du, Yuqing Fan, Ruichao Zhang at Purdue University\n");
-    printf("Current version: v0.0.1a\n"); 
-    printf("\n");           
+    // printf("      ___           ___           ___           ___                    \n");
+    // printf("     /\\  \\         /\\  \\         /\\  \\         /\\  \\                   \n");
+    // printf("    /::\\  \\        \\:\\  \\        \\:\\  \\       /::\\  \\                  \n");
+    // printf("   /:/\\:\\  \\        \\:\\  \\        \\:\\  \\     /:/\\:\\  \\                 \n");
+    // printf("  /:/  \\:\\  \\       /::\\  \\       /::\\  \\   /:/  \\:\\  \\                \n");
+    // printf(" /:/__/ \\:\\__\\     /:/\\:\\__\\     /:/\\:\\__\\ /:/__/ \\:\\__\\               \n");
+    // printf(" \\:\\  \\ /:/  /    /:/  \\/__/    /:/  \\/__/ \\:\\  \\ /:/  /               \n");
+    // printf("  \\:\\  /:/  /    /:/  /        /:/  /       \\:\\  /:/  /                \n");
+    // printf("   \\:\\/:/  /     \\/__/         \\/__/         \\:\\/:/  /                 \n");
+    // printf("    \\::/  /                                   \\::/  /                  \n");
+    // printf("     \\/__/                                     \\/__/                   \n");
+    // printf("      ___           ___           ___           ___           ___      \n");
+    // printf("     /\\  \\         /\\  \\         /\\  \\         /\\  \\         /\\  \\     \n");
+    // printf("    /::\\  \\       /::\\  \\       /::\\  \\       /::\\  \\        \\:\\  \\    \n");
+    // printf("   /:/\\:\\  \\     /:/\\:\\  \\     /:/\\:\\  \\     /:/\\:\\  \\        \\:\\  \\   \n");
+    // printf("  /::\\~\\:\\  \\   /:/  \\:\\  \\   /::\\~\\:\\__\\   /:/  \\:\\  \\       /::\\  \\  \n");
+    // printf(" /:/\\:\\ \\:\\__\\ /:/__/ \\:\\__\\ /:/\\:\\ \\:|__| /:/__/ \\:\\__\\     /:/\\:\\__\\ \n");
+    // printf(" \\/_|::\\/:/  / \\:\\  \\ /:/  / \\:\\~\\:\\/:/  / \\:\\  \\ /:/  /    /:/  \\/__/ \n");
+    // printf("    |:|::/  /   \\:\\  /:/  /   \\:\\ \\::/  /   \\:\\  /:/  /    /:/  /      \n");
+    // printf("    |:|\\/__/     \\:\\/:/  /     \\:\\/:/  /     \\:\\/:/  /     \\/__/       \n");
+    // printf("    |:|  |        \\::/  /       \\::/__/       \\::/  /                  \n");
+    // printf("     \\|__|         \\/__/         ~~            \\/__/                   \n");   
+    // printf("\n");
+    printf("Developed by Weili An, Xin Du, Yuqing Fan, Ruichao dZhang at Purdue University\n");
+    // printf("Current version: v0.0.1a\n"); 
+    // printf("\n");           
     // Init task need to have to priority to ensure the
     // rest tasks can be properly initated
     xTaskCreate(otto_init, "OTTO Init task", 2048, NULL, OTTO_INIT_TASK_PRI, NULL);
@@ -127,7 +126,7 @@ void otto_init(void *param) {
 
     // Motor task
     // ESP_LOGI(__func__, "Launch motor task");
-    // xTaskCreate(motor_task, "motor Task", 4096, NULL, OTTO_MOTOR_TASK_PRI, NULL);
+    // xTaskCreatePinnedToCore(motor_task, "motor Task", 4096, NULL, OTTO_MOTOR_TASK_PRI, NULL, PRO_CPU_NUM);
 
     // Communication initialization
     if (ESP_NOW_MODE) {
@@ -174,7 +173,7 @@ void imu_task(void *param) {
 
     // Init loop vars
     xLastWakeTime = xTaskGetTickCount();
-    xImuFrequency = 1000 / OTTO_IMU_RATE_HZ / portTICK_RATE_MS;
+    xImuFrequency = (1000 / OTTO_IMU_RATE_HZ) / portTICK_RATE_MS;
     ESP_LOGI(__func__, "IMU Update per %d ticks", xImuFrequency);
 
     while (1) {
@@ -185,7 +184,7 @@ void imu_task(void *param) {
         ESP_ERROR_CHECK(imu.updateAll());
         imu.runFusion();
         eulerAngles = imu.getEulerAngles();
-        ESP_LOGD(__func__, "r%.2frp%.2fpy%.2fy", eulerAngles.roll, eulerAngles.pitch, eulerAngles.yaw);
+        // ESP_LOGD(__func__, "r%.2frp%.2fpy%.2fy", eulerAngles.roll, eulerAngles.pitch, eulerAngles.yaw);
 
         feedbackData.leftAngularVelo = 0;
         feedbackData.rightAngularVelo = 0;
@@ -222,6 +221,7 @@ void comm_receiver_task(void *param) {
     while (1) {
         uint8_t headerByte;
 
+        // Sync header bytes
         while (1) {
             int length = 0;
             ESP_ERROR_CHECK(uart_get_buffered_data_len(UART_NUM_0, (size_t*)&length));
@@ -274,7 +274,13 @@ void comm_sender_task(void *param) {
             feedbackDataPacket.header = HEADER;
             feedbackDataPacket.feedBackData = feedbackData;
             feedbackDataPacket.timestamp = 0; // TODO: 
+<<<<<<< HEAD
             uartWired.sendData(&feedbackDataPacket, sizeof(Feedback_Data_Packet_UART));
+=======
+            // uartWired.sendData(feedbackDataPacket, sizeof(Feedback_Data_Packet));
+            // Hard code 44 bytes to avoid extra bytes sent to serial
+            uart_write_bytes(UART_NUM_0, &feedbackDataPacket, 44);
+>>>>>>> 1d4272a7630f7912214a16addc5bf42b9d7eb130
         }
     }
 
@@ -289,15 +295,112 @@ void comm_sender_task(void *param) {
  */
 void display_task(void *param) {
     Command_Data commandData;
-    LCD1602 lcd(0b0100000);
+    LCD1602 lcd(0b0100000, 0b0100111);
     ESP_ERROR_CHECK(lcd.begin(OTTO_I2C_PORT_NUM));
     while(1) {
         if( xQueuePeek( dataInQueue, (void*) &( commandData ), pdMS_TO_TICKS( 100 ) ) ) {
             // ESP_LOGE(__func__, "received. %f", commandData);
             // todo: display the received data
-            char str[100];
-            sprintf(str,"%f",commandData.leftAngularVelo);
-            lcd.write_string(str);
+             char leftvelo[100];
+             sprintf(str,"%f",commandData.leftAngularVelo);
+             char rightvelo[100];
+             sprintf(str,"%f",commandData.rightAngularVelo);
+             char leftang[100];
+             sprintf(str,"%f",commandData.angleRotatedLeftMotor);
+             char rightang[100];
+             sprintf(str,"%f",commandData.angleRotatedRightMotor);
+            // lcd.write_string(str);
+            write_command("LAV"+leftvelo);
+
+ 
+        
+        // const char *menuu[3] = { "mac address", "orientation", "motor angle", "motor velocity"};
+        // const char *ori[3] = { "yaw", "pitch", "roll"};
+        // const char *mac[2] = { "mac addr1", "mac addr2"};
+        // const char *motor_ang[2] = { leftang, rightang};
+        // const char *motor_velo[2] = { leftvelo, rightvelo};
+        // const char *str = menuu[i];  
+        // err = readReg(switch_addr, MCP23008_REG_GPIO, &sw_var, 1);
+        // //printf("sw var%d \n",~sw_var);
+        // uint8_t up = ~sw_var & 0b00001;      //gp 0
+        // uint8_t down = ~sw_var & 0b00010;    //gp 1
+        // uint8_t menu = ~sw_var & 0b00100;    //gp 2
+        // uint8_t left = ~sw_var & 0b01000;    //gp 3
+        // uint8_t right = ~sw_var & 0b10000;   //gp 4
+        // if (i > 2 ){
+        //     i = 0;
+        // }
+        // if (i < 0){ 
+        //     i = 2;
+        // }
+        
+        // //printf("sw var%d \n up%d\n",sw_var,up);
+        // //printf("buttons = up %d down %d menu %d left %d right %d \n", up, down, menu, left, right);
+        // if(up){
+        //     printf("u");
+        //     err = move_cursor(0, 0);
+        //     const char *str = menuu[i++];
+        //     err = write_string(str);
+        
+        // }
+        // if(down){
+        //     printf("d");
+        //     err = move_cursor(0, 0);
+        //     const char *str = menuu[i--];
+        //     err = write_string(str);
+        
+        // }
+        // if(menu){
+        //     printf("m");
+        //     err = move_cursor(0, 0);
+        //     err = clear();
+        //     err = write_string("Main Menu");
+        //     key = ~key;
+        // }
+        // if(left){
+        //     printf("l");
+        //     if (strcmp(str, "motor velo")){
+        //         err = move_cursor(0, 0);
+        //         err = clear();
+        //         const char *info = motor_velo[1];
+        //         err = write_string(motor_velo[0]);
+        //         err = move_cursor(0, 1);
+        //         err = write_string(motor_velo[1]);
+                
+        //     }
+        //     if (strcmp(str, "motor angle")){
+        //         err = move_cursor(0, 0);
+        //         err = clear();
+        //         const char *info = motor_ang[1];
+        //         err = write_string(motor_ang[0]);
+        //         err = move_cursor(0, 1);
+        //         err = write_string(motor_ang[1]);
+                
+        //     }
+
+
+        
+        // }
+        // if(right){
+        //     printf("r");
+        //     if (strcmp(info,motor_ang[1])){
+        //         err = move_cursor(0, 0);
+        //         err = clear();
+        //         err = write_string("motor angle");
+        //         str = "motor angle";
+        //         i = 2;
+        //     }
+        //     if (strcmp(info,motor_velo[1])){
+        //         err = move_cursor(0, 0);
+        //         err = clear();
+        //         err = write_string("motor velocity");
+        //         str = "motor velocity";
+        //         i = 3;
+        //     }
+
+        // }
+        
+        // ets_delay_us(250000); 
         }
 
         // todo: check button status
@@ -317,22 +420,22 @@ void motor_task(void *param) {
     A4988_Driver ops_wheel (SIXTEENTH_STEP, OPPOSITE, nema17);
 
     MotorIOConfig_t motor_pin;
-    motor_pin.step = GPIO_NUM_32;
-    motor_pin.en = GPIO_NUM_33;
-    motor_pin.dir = GPIO_NUM_25;
+    motor_pin.step = GPIO_NUM_33;
+    motor_pin.en = GPIO_NUM_25;
+    motor_pin.dir = GPIO_NUM_32;
     // TODO Connect the following pins to VCC
-    motor_pin.ms1 = GPIO_NUM_33;
-    motor_pin.ms2 = GPIO_NUM_33;
-    motor_pin.ms3 = GPIO_NUM_33;
+    motor_pin.ms1 = GPIO_NUM_21;
+    motor_pin.ms2 = GPIO_NUM_21;
+    motor_pin.ms3 = GPIO_NUM_21;
     ESP_ERROR_CHECK(ref_wheel.configIO(motor_pin));
 
-    motor_pin.step = GPIO_NUM_19;
-    motor_pin.en = GPIO_NUM_18;
-    motor_pin.dir = GPIO_NUM_4;
+    motor_pin.step = GPIO_NUM_18;
+    motor_pin.en = GPIO_NUM_4;
+    motor_pin.dir = GPIO_NUM_19;
     // TODO Connect the following pins to VCC
-    motor_pin.ms1 = GPIO_NUM_33;
-    motor_pin.ms2 = GPIO_NUM_33;
-    motor_pin.ms3 = GPIO_NUM_33;
+    motor_pin.ms1 = GPIO_NUM_21;
+    motor_pin.ms2 = GPIO_NUM_21;
+    motor_pin.ms3 = GPIO_NUM_21;
     ESP_ERROR_CHECK(ops_wheel.configIO(motor_pin));
     Command_Data commandData;
     while(1) {
