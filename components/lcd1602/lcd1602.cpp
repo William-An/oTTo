@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include "lcd1602.h"
+#include "driver/gpio.h"
+#include <string.h>
 
 // Adapted from https://github.com/DavidAntliff/esp32-i2c-lcd1602
 /*
@@ -90,8 +92,10 @@
  *   9. send command 0x80    // set cursor to home position (row 1, column 1)
  */
 
-LCD1602::LCD1602(uint8_t addr) {
-    mcp23008_addr = addr;
+
+LCD1602::LCD1602(uint8_t addr, uint8_t addr2) {
+    lcd_addr = addr;
+    switch_addr = addr2;
 }
 
 /**
@@ -107,80 +111,55 @@ esp_err_t LCD1602::begin(i2c_port_t portNum) {
     this->i2c_portNum = portNum;
 
     // Set MCP GPIO to output mode, default is 0xFF
-    err = writeReg(MCP23008_REG_IODIR, 0);
+    err = writeReg(lcd_addr,MCP23008_REG_IODIR, 0);
     ESP_ERROR_CHECK(err);
     if (err != ESP_OK)
         return err;
 
     // Set MCP GPIO to output mode, default is 0xFF
-    err = writeReg(MCP23008_REG_IPOL, 0);
+    err = writeReg(lcd_addr,MCP23008_REG_IPOL, 0);
     ESP_ERROR_CHECK(err);
     if (err != ESP_OK)
         return err;
 
     ESP_LOGI("Begin", "Set all to 0s");
 
-    // Set default outputs to all 0s
-    err = writeReg(MCP23008_REG_GPIO, 0x00);
+    // Set default inputs to all 0s
+    err = writeReg(switch_addr,MCP23008_REG_GPIO, 0x2);
+    ESP_ERROR_CHECK(err);
     if (err != ESP_OK)
         return err;
-    ESP_ERROR_CHECK(err);
     
-
-
+    
     // Home
-    err = write_command(COMMAND_RETURN_HOME);
-    ESP_ERROR_CHECK(err);
-    ets_delay_us(600);
+   // err = write_command(COMMAND_RETURN_HOME);  
+   err = reset();
+   ESP_ERROR_CHECK(err);
     
+    err = clear();
 
-    // Write an A
-   err = write_string("OTTO  Test");
+    err = enable_cursor(0);
+    err = enable_blink(0);
 
-    unsigned char T[] = {
-        0x7E, //  ######
-        0x18, //    ##  
-        0x30, //   ##   
-        0x30, //   ##   
-        0x30, //   ##   
-        0x60, //  ##    
-        0x60, //  ##    
-        0x60, //  ##    
-        0xC0, // ##     
-        0x00, //  
-        };
-    unsigned char O[] = {
-	// @50 'o' (6 pixels wide)
-	0x00, //       
-	0x00, //       
-	0x00, //       
-	0x00, //       
-	0x3C, //   ####
-	0x6C, //  ## ##
-	0xCC, // ##  ##
-	0xCC, // ##  ##
-	0xD8, // ## ## 
-	0xF0, // ####   
-        };
-    
-    // write_command(0x40);//pointer to first CGRAM addres
-    // write_data(0x00);
-    // write_data(0x00);
-    // write_data(0x00);
-    // write_data(0x00);
-    // write_data(0x3C);
-    // write_data(0x6C);
-    // write_data(0xCC);
-    // write_data(0xCC);
-    // write_data(0xD8);
-    // write_data(0xF0);
-    
-    
+    const char *str = "owergdfghgkhgjkffghdhfhjfhd";
+    move_cursor(0, 0);
+    write_string(str); 
+    move_cursor(1,1);
+    write_string("why"); 
+    err = enable_cursor(0);
+    err = enable_blink(0);
 
-    
-    //set left to right ???
-    // write_command(FLAG_ENTRY_MODE_SET_ENTRY_INCREMENT | FLAG_ENTRY_MODE_SET_ENTRY_SHIFT_OFF);
-
+while(1){
+set_scroll(RIGHT);
+vTaskDelay(500/ portTICK_RATE_MS);
+    // for (int positionCounter2 = 0; positionCounter2 <5; positionCounter2++)
+    // {
+    //   set_scroll(RIGHT);  //Scrolls the contents of the display one space to the left.
+    //   //write_char('>');
+    //   vTaskDelay(500/ portTICK_RATE_MS);
+    // }
+    }
+    //clear();
     ESP_LOGI("Begin", "Done");
     vTaskDelay(300000 / portTICK_RATE_MS);
 
@@ -189,12 +168,100 @@ esp_err_t LCD1602::begin(i2c_port_t portNum) {
     return reset();
 }
 
+// void helper(){
+//     /******************************************
+//  * Main Menu 
+//  * mac address 
+//  *      mac addr
+//  * orientation
+//  *      data1 
+//  *      data2
+//  *      data3
+//  * motor info
+//  *      data1
+//  *      data2
+//  * ****************************************/
+
+// int cur_line = 1;
+// uint8_t sw_var;
+// uint8_t key = 0;//
+// int i = 0;
+
+
+// while(1){
+//     const char *menuu[3] = { "mac address", "orientation", "motor info"};
+//     const char *ori[3] = { "yaw", "pitch", "roll"};
+//     const char *mac[2] = { "mac addr1", "mac addr2"};
+//     const char *motor[2] = { "moter1 info", "motor2 info"};
+//     const char *str = menuu[i];
+//     err = readReg(switch_addr, MCP23008_REG_GPIO, &sw_var, 1);
+//     //printf("sw var%d \n",~sw_var);
+//     uint8_t up = ~sw_var & 0b00001;      //gp 0
+//     uint8_t down = ~sw_var & 0b00010;    //gp 1
+//     uint8_t menu = ~sw_var & 0b00100;    //gp 2
+//     uint8_t left = ~sw_var & 0b01000;    //gp 3
+//     uint8_t right = ~sw_var & 0b10000;   //gp 4
+//     if (i > 2 ){
+//         i = 0;
+//     }
+//     if (i < 0){ 
+//         i = 2;
+//     }
+    
+//     //printf("sw var%d \n up%d\n",sw_var,up);
+//     //printf("buttons = up %d down %d menu %d left %d right %d \n", up, down, menu, left, right);
+//     if(up){
+//         printf("u");
+//         err = move_cursor(0, 0);
+//         const char *str = menuu[i++];
+//         err = write_string(str);
+       
+//     }
+//     if(down){
+//         printf("d");
+//         err = move_cursor(0, 0);
+//         const char *str = menuu[i--];
+//         err = write_string(str);
+       
+//     }
+//     if(menu){
+//         printf("m");
+//         err = move_cursor(0, 0);
+//         err = clear();
+//         err = write_string("Main Menu");
+//         key = ~key;
+//     }
+//     if(left){
+//         printf("l");
+//         if (strcmp(str, "mac address")){
+//             err = move_cursor(0, 0);
+//             err = clear();
+//             err = write_string("mac address info");
+//             str = "mac address info";
+//         }
+    
+//     }
+//     if(right){
+//         printf("r");
+//         if (strcmp(str,"mac address info")){
+//             err = move_cursor(0, 0);
+//             err = clear();
+//             err = write_string("mac address");
+//             str = "mac address";
+//         }
+//     }
+    
+//     ets_delay_us(250000); 
+// }
+
+// }
+
 // Display control
 esp_err_t LCD1602::reset() {
     esp_err_t err = ESP_OK;
 
     // Set default outputs to all 0s except enable
-    err = writeReg(MCP23008_REG_GPIO, 0);
+    err = writeReg(lcd_addr,MCP23008_REG_GPIO, 0);
     if (err != ESP_OK)
         return err;
     
@@ -249,7 +316,7 @@ esp_err_t LCD1602::clear() {
 esp_err_t LCD1602::enable_display(bool en) {
     esp_err_t err = ESP_FAIL;
 
-    err = write_command(en?COMMAND_DISPLAY_CONTROL | FLAG_DISPLAY_CONTROL_DISPLAY_ON:COMMAND_DISPLAY_CONTROL |~FLAG_DISPLAY_CONTROL_DISPLAY_ON );
+    err = write_command(en?COMMAND_DISPLAY_CONTROL | FLAG_DISPLAY_CONTROL_DISPLAY_ON:COMMAND_DISPLAY_CONTROL | FLAG_DISPLAY_CONTROL_DISPLAY_OFF );
     if (err == ESP_OK)
     {
         vTaskDelay(1000 / portTICK_RATE_MS);
@@ -274,7 +341,7 @@ esp_err_t LCD1602::enable_cursor(bool en) {
 esp_err_t LCD1602::enable_blink(bool en) {
     esp_err_t err = ESP_FAIL;
 //??
-    err = write_command(en?COMMAND_DISPLAY_CONTROL | FLAG_DISPLAY_CONTROL_BLINK_ON:COMMAND_DISPLAY_CONTROL | ~FLAG_DISPLAY_CONTROL_BLINK_ON);
+    err = write_command(en?COMMAND_DISPLAY_CONTROL | FLAG_DISPLAY_CONTROL_BLINK_ON:COMMAND_DISPLAY_CONTROL | ~ FLAG_DISPLAY_CONTROL_BLINK_ON);
     if (err == ESP_OK)
     {
         vTaskDelay(1000 / portTICK_RATE_MS);
@@ -387,7 +454,8 @@ esp_err_t LCD1602::write_string(const char *str) {
 }
 
 // Refer to ICM 20948 for documentation
-esp_err_t LCD1602::readReg(uint8_t regAddr, uint8_t* data, size_t len) {
+//esp_err_t LCD1602::readReg(uint8_t regAddr, uint8_t* data, size_t len) {
+esp_err_t LCD1602::readReg(uint8_t mcp_addr, uint8_t regAddr, uint8_t* data, size_t len) {
 
     // Write then read sequence for ICM 20948, 
     // adapted from master branch of ESP-IDF
@@ -403,7 +471,7 @@ esp_err_t LCD1602::readReg(uint8_t regAddr, uint8_t* data, size_t len) {
     }
 
     // Device addr on I2C
-    err = i2c_master_write_byte(handle, mcp23008_addr << 1 | I2C_MASTER_WRITE, true);
+    err = i2c_master_write_byte(handle, mcp_addr << 1 | I2C_MASTER_WRITE, true);
     if (err != ESP_OK) {
         goto end;
     }
@@ -421,7 +489,7 @@ esp_err_t LCD1602::readReg(uint8_t regAddr, uint8_t* data, size_t len) {
     }
 
     // Issue read
-    err = i2c_master_write_byte(handle, mcp23008_addr << 1 | I2C_MASTER_READ, true);
+    err = i2c_master_write_byte(handle, mcp_addr << 1 | I2C_MASTER_READ, true);
     if (err != ESP_OK) {
         goto end;
     }
@@ -445,7 +513,7 @@ end:
 }
 
 // Future: Multiple bytes write support
-esp_err_t LCD1602::writeReg(uint8_t regAddr, uint8_t data) {
+esp_err_t LCD1602::writeReg(uint8_t mcp_addr,uint8_t regAddr, uint8_t data) {
     uint8_t write_buf[2] = {regAddr, data};
 
     esp_err_t err = ESP_OK;
@@ -461,7 +529,7 @@ esp_err_t LCD1602::writeReg(uint8_t regAddr, uint8_t data) {
     }
 
     // Device addr
-    err = i2c_master_write_byte(handle, mcp23008_addr << 1 | I2C_MASTER_WRITE, true);
+    err = i2c_master_write_byte(handle, mcp_addr << 1 | I2C_MASTER_WRITE, true);
     if (err != ESP_OK) {
         goto end;
     }
@@ -483,18 +551,18 @@ end:
     return err;
 }
 
-esp_err_t LCD1602::maskWriteReg(uint8_t regAddr, uint8_t regMask,uint8_t data, bool clearMasked) {
+esp_err_t LCD1602::maskWriteReg(uint8_t mcp_addr,uint8_t regAddr, uint8_t regMask,uint8_t data, bool clearMasked) {
     uint8_t buf = 0;
     esp_err_t err = ESP_OK;
 
     // Read the current reg value
-    err = readReg(regAddr, &buf, 1);
+    err = readReg(mcp_addr,regAddr, &buf, 1);
     if (err != ESP_OK)
         return err;
     
     // Whether to OR the data and write to reg
     buf = (data & regMask) | (clearMasked ? (~regMask) & buf : buf);
-    return writeReg(regAddr, buf);
+    return writeReg(mcp_addr, regAddr, buf);
 }
 
 /**
@@ -505,13 +573,13 @@ esp_err_t LCD1602::maskWriteReg(uint8_t regAddr, uint8_t regMask,uint8_t data, b
  * @return esp_err_t 
  */
 esp_err_t LCD1602::strobe_enable(uint8_t data) {
-    esp_err_t err1 = writeReg(MCP23008_REG_GPIO, data & ~FLAG_ENABLE);
+    esp_err_t err1 = writeReg(lcd_addr,MCP23008_REG_GPIO, data & ~FLAG_ENABLE);
     ets_delay_us(1);
     
-    esp_err_t err2 = writeReg(MCP23008_REG_GPIO, data | FLAG_ENABLE);
+    esp_err_t err2 = writeReg(lcd_addr,MCP23008_REG_GPIO, data | FLAG_ENABLE);
     ets_delay_us(1);
 
-    esp_err_t err3 = writeReg(MCP23008_REG_GPIO, data & ~FLAG_ENABLE);
+    esp_err_t err3 = writeReg(lcd_addr,MCP23008_REG_GPIO, data & ~FLAG_ENABLE);
     ets_delay_us(1);
 
     return err1 == ESP_OK ? (ESP_OK ? err2 : err1):err3;
@@ -525,7 +593,7 @@ esp_err_t LCD1602::strobe_enable(uint8_t data) {
  */
 esp_err_t LCD1602::write_top_nibble(uint8_t data) {
     ESP_LOGD("LCD1602", "write_top_nibble 0x%02x", data);
-    esp_err_t err1 = writeReg(MCP23008_REG_GPIO, data);
+    esp_err_t err1 = writeReg(lcd_addr,MCP23008_REG_GPIO, data);
     esp_err_t err2 = strobe_enable(data);
 
     return err1 == ESP_OK ? err2 : err1;
