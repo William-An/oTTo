@@ -125,61 +125,14 @@ esp_err_t LCD1602::begin(i2c_port_t portNum) {
     if (err != ESP_OK)
         return err;
     ESP_ERROR_CHECK(err);
-    
-
 
     // Home
     err = write_command(COMMAND_RETURN_HOME);
     ESP_ERROR_CHECK(err);
     ets_delay_us(600);
-    
 
     // Write an A
    err = write_string("OTTO  Test");
-
-    unsigned char T[] = {
-        0x7E, //  ######
-        0x18, //    ##  
-        0x30, //   ##   
-        0x30, //   ##   
-        0x30, //   ##   
-        0x60, //  ##    
-        0x60, //  ##    
-        0x60, //  ##    
-        0xC0, // ##     
-        0x00, //  
-        };
-    unsigned char O[] = {
-	// @50 'o' (6 pixels wide)
-	0x00, //       
-	0x00, //       
-	0x00, //       
-	0x00, //       
-	0x3C, //   ####
-	0x6C, //  ## ##
-	0xCC, // ##  ##
-	0xCC, // ##  ##
-	0xD8, // ## ## 
-	0xF0, // ####   
-        };
-    
-    // write_command(0x40);//pointer to first CGRAM addres
-    // write_data(0x00);
-    // write_data(0x00);
-    // write_data(0x00);
-    // write_data(0x00);
-    // write_data(0x3C);
-    // write_data(0x6C);
-    // write_data(0xCC);
-    // write_data(0xCC);
-    // write_data(0xD8);
-    // write_data(0xF0);
-    
-    
-
-    
-    //set left to right ???
-    // write_command(FLAG_ENTRY_MODE_SET_ENTRY_INCREMENT | FLAG_ENTRY_MODE_SET_ENTRY_SHIFT_OFF);
 
     ESP_LOGI("Begin", "Done");
     vTaskDelay(300000 / portTICK_RATE_MS);
