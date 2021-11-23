@@ -18,7 +18,7 @@
 #include "esp_system.h"
 #include "esp_spi_flash.h"
 #include "imu_sensor.h"
-#include "imu_icm_20948.h"
+#inclu
 #include "test_imu.h"
 #include "lcd1602.h"
 
@@ -74,3 +74,4 @@ void app_main(void)
     ESP_LOGI(TAG, "begin");
     ESP_ERROR_CHECK(lcd.begin(OTTO_I2C_PORT_NUM));
 }
+
