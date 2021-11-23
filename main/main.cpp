@@ -1,5 +1,4 @@
-/************************************************************
-*
+/*
 * @file:      main.cpp
 * @author:    Weili An, Xin Du, Yuqing Fan, Ruichao Zhang
 * @email:     {an107, du201, fan230, zhan3147}@purdue.edu
