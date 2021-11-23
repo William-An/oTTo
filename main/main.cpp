@@ -106,45 +106,17 @@ void otto_init(void *param) {
     // Get Mac addr
     ESP_ERROR_CHECK(get_macAddr());
 
-    // data in queue initialization
-    ESP_LOGI(__func__, "Init data in Queue");
-    dataInQueue = xQueueCreate(OTTO_DATA_IN_QUEUE_LEN, sizeof(Command_Data));
-
-    // data out queue initialization
-    ESP_LOGI(__func__, "Init data out Queue");
-    dataOutQueue = xQueueCreate(OTTO_DATA_OUT_QUEUE_LEN, sizeof(Feedback_Data));
-
-    // Start subsystem tasks
-    // IMU task
-    // Pin IMU task to APP_CPU per ESP32 Guidelines: 
-    //  https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/freertos-smp.html#floating-points
-    // ESP_LOGI(__func__, "Launch IMU task");
-    // xTaskCreatePinnedToCore(imu_task, "IMU Task", 8192, NULL, OTTO_IMU_TASK_PRI, NULL, APP_CPU_NUM);
-
-    // LCD task
-    // ESP_LOGI(__func__, "Launch LCD task");
-    // xTaskCreate(display_task, "LCD Task", 4096, NULL, OTTO_DISP_TASK_PRI, NULL);
-
-    // Motor task
-    // ESP_LOGI(__func__, "Launch motor task");
-    // xTaskCreate(motor_task, "motor Task", 4096, NULL, OTTO_MOTOR_TASK_PRI, NULL);
-
     // Communication initialization
-    if (ESP_NOW_MODE) {
-        ESP_LOGI(__func__, "Init communication with ESP_NOW");
-        EspNowWireless espNow(false, dataInQueue, dataOutQueue);
-    } else {
-        ESP_LOGI(__func__, "Init communication with UART");
-        // UartWired uartWired(false);
-    }
+    ESP_LOGI(__func__, "Init communication with ESP_NOW");
+    static EspNowWireless espNow(false, dataInQueue, dataOutQueue);
     
     // COMM Sender task
     // ESP_LOGI(__func__, "Launch Comm sender task");
     // xTaskCreate(comm_sender_task, "Comm sender Task", 4096, NULL, OTTO_COMM_SENDER_TASK_PRI, NULL);
 
     // COMM Receiver task
-    // ESP_LOGI(__func__, "Launch Comm receiver task");
-    // xTaskCreate(comm_receiver_task, "Comm receiver Task", 4096, NULL, OTTO_COMM_RECEIVER_TASK_PRI, NULL);
+    ESP_LOGI(__func__, "Launch Comm receiver task");
+    xTaskCreate(comm_receiver_task, "Comm receiver Task", 4096, (void*) &espNow, OTTO_COMM_RECEIVER_TASK_PRI, NULL);
 
     // Clean up init task
     vTaskDelete(NULL);
@@ -214,8 +186,8 @@ void imu_task(void *param) {
 void comm_receiver_task(void *param) {
 
     ESP_LOGI(__func__, "Comm receiver Task begins");
-    Command_Data_Packet_UART commandDataPacket;
-    Command_Data commandData;
+    Command_Data_Packet_ESP_NOW commandDataPacketEspNow;
+    EspNowWireless espNow = *((EspNowWireless*)param);
 
     // Flush current fifo before processing
     ESP_ERROR_CHECK(uart_flush(UART_NUM_0));
@@ -242,14 +214,12 @@ void comm_receiver_task(void *param) {
             }  
         }
 
-        int readBytes = uartWired.receiveData(&commandData, sizeof(commandData), portMAX_DELAY);
-        if (readBytes == sizeof(commandData)) {
+        int readBytes = uartWired.receiveData(&commandDataPacketEspNow, sizeof(commandDataPacketEspNow), portMAX_DELAY);
+        if (readBytes == sizeof(commandDataPacketEspNow)) {
             // todo: add checking for header, CRC, ... to check the correctness of the packet
             // commandData = commandDataPacket.commandData;
-            ESP_LOGI(__func__, "Comm receiver Task: received one packet: omega_left: %.2f", commandData.leftAngularVelo);
-            if (xQueueSendToBack( dataInQueue, &commandData, ( TickType_t ) 0 ) != pdPASS ) {
-                ESP_LOGI(__func__, "Comm receiver Task: queue full");
-            }
+            ESP_LOGI(__func__, "Comm receiver Task: received one packet: omega_left: %.2f", commandDataPacketEspNow.commandData.leftAngularVelo);
+            espNow.sendData(&commandDataPacketEspNow, sizeof(commandDataPacketEspNow));
         }
     }
 
@@ -280,71 +250,4 @@ void comm_sender_task(void *param) {
 
     ESP_LOGE(__func__, "COMM sender Task quit unexpectedly");
     vTaskDelete(NULL);
-}
-
-/**
- * @brief Init lcd 
- * 
- * @param param 
- */
-void display_task(void *param) {
-    Command_Data commandData;
-    LCD1602 lcd(0b0100000);
-    ESP_ERROR_CHECK(lcd.begin(OTTO_I2C_PORT_NUM));
-    while(1) {
-        if( xQueuePeek( dataInQueue, (void*) &( commandData ), pdMS_TO_TICKS( 100 ) ) ) {
-            // ESP_LOGE(__func__, "received. %f", commandData);
-            // todo: display the received data
-            char str[100];
-            sprintf(str,"%f",commandData.leftAngularVelo);
-            lcd.write_string(str);
-        }
-
-        // todo: check button status
-    }
-}
-
-/**
- * @brief Motor task
- * 
- * @param param 
- */
-void motor_task(void *param) {
-    A4988_Driver ref_wheel;
-
-    Nema17Config_t nema17;
-    nema17.fullStep = 1.8;
-    A4988_Driver ops_wheel (SIXTEENTH_STEP, OPPOSITE, nema17);
-
-    MotorIOConfig_t motor_pin;
-    motor_pin.step = GPIO_NUM_32;
-    motor_pin.en = GPIO_NUM_33;
-    motor_pin.dir = GPIO_NUM_25;
-    // TODO Connect the following pins to VCC
-    motor_pin.ms1 = GPIO_NUM_33;
-    motor_pin.ms2 = GPIO_NUM_33;
-    motor_pin.ms3 = GPIO_NUM_33;
-    ESP_ERROR_CHECK(ref_wheel.configIO(motor_pin));
-
-    motor_pin.step = GPIO_NUM_19;
-    motor_pin.en = GPIO_NUM_18;
-    motor_pin.dir = GPIO_NUM_4;
-    // TODO Connect the following pins to VCC
-    motor_pin.ms1 = GPIO_NUM_33;
-    motor_pin.ms2 = GPIO_NUM_33;
-    motor_pin.ms3 = GPIO_NUM_33;
-    ESP_ERROR_CHECK(ops_wheel.configIO(motor_pin));
-    Command_Data commandData;
-    while(1) {
-        if( xQueueReceive( dataInQueue, &commandData, portMAX_DELAY) == pdTRUE ) {
-            ESP_LOGI(__func__, "motor_task received command");
-            // todo: use the data to drive the motor accordingly;
-            ESP_LOGI(__func__, "commandData.leftAngularVelo: %f", commandData.leftAngularVelo);
-            ESP_LOGI(__func__, "commandData.rightAngularVelo: %f", commandData.rightAngularVelo);
-            ESP_ERROR_CHECK(ref_wheel.setContinuous(commandData.leftAngularVelo));
-            ESP_ERROR_CHECK(ops_wheel.setContinuous(commandData.rightAngularVelo));
-        } else {
-            ESP_LOGW(__func__, "fail to retrieve item for motor");
-        }
-    }
 }
