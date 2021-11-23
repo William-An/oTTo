@@ -20,22 +20,9 @@ UartWired :: UartWired(bool debugMode) {
     uart_set_pin(0, 1, 3, -1, -1);
 }
 
-int UartWired :: sendData(const void* data, uint32_t size) {
+int UartWired :: sendData(const void* data, size_t size) {
 
-    Command_Data_Packet dataPacket;
-    dataPacket.header = HEADER;
-    dataPacket.commandData = *(Command_Data*)data;
-    // dataPacket.timestamp = esp_timer_get_time();
-    dataPacket.timestamp = 0;
-    dataPacket.CRC = calculateCRC();
-
-    const int txBytes = uart_write_bytes(UART_NUM_0, (void*) &dataPacket, 32);
-    if (_debugMode) {
-        static const char *TX_TASK_TAG = "TX_TASK";
-        esp_log_level_set(TX_TASK_TAG, ESP_LOG_INFO);
-        ESP_LOGI(TX_TASK_TAG, "Wrote %d bytes", txBytes);
-    }
-    return txBytes;
+    return uart_write_bytes(UART_NUM_0, data, size);
 }
 
 uint32_t UartWired :: calculateCRC() {
@@ -43,22 +30,7 @@ uint32_t UartWired :: calculateCRC() {
     return crc;
 }
 
-int UartWired :: receiveData(void* data, uint32_t size) {
-    // const TickType_t xDelay = pdMS_TO_TICKS( 1000 );
-    static const char *TX_TASK_TAG = "TX_TASK";
-    int readBytes = 0;
-
-    if (size == sizeof(Command_Data_Packet)) {
-        readBytes = uart_read_bytes(UART_NUM_0, data, sizeof(Command_Data_Packet), portMAX_DELAY);
-        // Command_Data_Packet* packet = (Command_Data_Packet*) data;
-        // Command_Data packet_data = packet -> commandData;
-        Command_Data packet_data = * (Command_Data*) data;
-        esp_log_level_set(TX_TASK_TAG, ESP_LOG_INFO);
-        // ESP_LOGI(TX_TASK_TAG, "The data leftAngularVelo is %f", packet_data.leftAngularVelo);
-        // ESP_LOGI(TX_TASK_TAG, "The data rightAngularVelo is %f", packet_data.rightAngularVelo);
-        // ESP_LOGI(TX_TASK_TAG, "The data angleRotatedLeftMotor is %f", packet_data.angleRotatedLeftMotor);
-        // ESP_LOGI(TX_TASK_TAG, "The data angleRotatedRightMotor is %f", packet_data.angleRotatedRightMotor);
-    }
-
-    return readBytes;
+int UartWired :: receiveData(void *buf, uint32_t length, TickType_t ticks_to_wait) {
+    
+    return uart_read_bytes(UART_NUM_0, buf, length, ticks_to_wait);
 }

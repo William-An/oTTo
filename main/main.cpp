@@ -22,6 +22,7 @@
 #include "communication_if.h"
 #include "communication_struct.h"
 #include "uart_wired.h"
+#include "esp_now_wireless.h"
 #include "otto.h"
 #include "motor_driver.h"
 #include "motor_stepper.h"
@@ -31,6 +32,9 @@ extern "C" void app_main(void);
 
 static QueueHandle_t dataInQueue;
 static QueueHandle_t dataOutQueue;
+
+// static EspNow* espNow;
+UartWired uartWired(false);
 
 void app_main(void)
 {
@@ -114,28 +118,33 @@ void otto_init(void *param) {
     // IMU task
     // Pin IMU task to APP_CPU per ESP32 Guidelines: 
     //  https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/freertos-smp.html#floating-points
-    ESP_LOGI(__func__, "Launch IMU task");
-    xTaskCreatePinnedToCore(imu_task, "IMU Task", 8192, NULL, OTTO_IMU_TASK_PRI, NULL, APP_CPU_NUM);
+    // ESP_LOGI(__func__, "Launch IMU task");
+    // xTaskCreatePinnedToCore(imu_task, "IMU Task", 8192, NULL, OTTO_IMU_TASK_PRI, NULL, APP_CPU_NUM);
 
     // LCD task
     // ESP_LOGI(__func__, "Launch LCD task");
     // xTaskCreate(display_task, "LCD Task", 4096, NULL, OTTO_DISP_TASK_PRI, NULL);
 
     // Motor task
-    ESP_LOGI(__func__, "Launch motor task");
-    xTaskCreate(motor_task, "motor Task", 4096, NULL, OTTO_MOTOR_TASK_PRI, NULL);
+    // ESP_LOGI(__func__, "Launch motor task");
+    // xTaskCreate(motor_task, "motor Task", 4096, NULL, OTTO_MOTOR_TASK_PRI, NULL);
 
     // Communication initialization
-    ESP_LOGI(__func__, "Init communication with UART");
-    UartWired uartWired(false);
+    if (ESP_NOW_MODE) {
+        ESP_LOGI(__func__, "Init communication with ESP_NOW");
+        EspNowWireless espNow(false, dataInQueue, dataOutQueue);
+    } else {
+        ESP_LOGI(__func__, "Init communication with UART");
+        // UartWired uartWired(false);
+    }
     
     // COMM Sender task
-    ESP_LOGI(__func__, "Launch Comm sender task");
-    xTaskCreate(comm_sender_task, "Comm sender Task", 4096, NULL, OTTO_COMM_SENDER_TASK_PRI, NULL);
+    // ESP_LOGI(__func__, "Launch Comm sender task");
+    // xTaskCreate(comm_sender_task, "Comm sender Task", 4096, NULL, OTTO_COMM_SENDER_TASK_PRI, NULL);
 
     // COMM Receiver task
-    ESP_LOGI(__func__, "Launch Comm receiver task");
-    xTaskCreate(comm_receiver_task, "Comm receiver Task", 4096, NULL, OTTO_COMM_RECEIVER_TASK_PRI, NULL);
+    // ESP_LOGI(__func__, "Launch Comm receiver task");
+    // xTaskCreate(comm_receiver_task, "Comm receiver Task", 4096, NULL, OTTO_COMM_RECEIVER_TASK_PRI, NULL);
 
     // Clean up init task
     vTaskDelete(NULL);
@@ -205,26 +214,25 @@ void imu_task(void *param) {
 void comm_receiver_task(void *param) {
 
     ESP_LOGI(__func__, "Comm receiver Task begins");
-    Command_Data_Packet commandDataPacket;
+    Command_Data_Packet_UART commandDataPacket;
     Command_Data commandData;
 
     // Flush current fifo before processing
     ESP_ERROR_CHECK(uart_flush(UART_NUM_0));
     while (1) {
-        // const int rxBytes = uartWired.receiveData(commandDataPacket, sizeof(Command_Data_Packet));
         uint8_t headerByte;
 
         while (1) {
             int length = 0;
             ESP_ERROR_CHECK(uart_get_buffered_data_len(UART_NUM_0, (size_t*)&length));
             ESP_LOGI(__func__, "Buffer size: %d", length);
-            uart_read_bytes(UART_NUM_0, &headerByte, sizeof(headerByte), portMAX_DELAY);
+            uartWired.receiveData(&headerByte, sizeof(headerByte), portMAX_DELAY);
             if (headerByte == HEADER_BYTE1) {
-                uart_read_bytes(UART_NUM_0, &headerByte, sizeof(headerByte), portMAX_DELAY);
+                uartWired.receiveData(&headerByte, sizeof(headerByte), portMAX_DELAY);
                 if (headerByte == HEADER_BYTE2) {
-                    uart_read_bytes(UART_NUM_0, &headerByte, sizeof(headerByte), portMAX_DELAY);
+                    uartWired.receiveData(&headerByte, sizeof(headerByte), portMAX_DELAY);
                     if (headerByte == HEADER_BYTE3) {
-                        uart_read_bytes(UART_NUM_0, &headerByte, sizeof(headerByte), portMAX_DELAY);
+                        uartWired.receiveData(&headerByte, sizeof(headerByte), portMAX_DELAY);
                         if (headerByte == HEADER_BYTE4) {
                             headerByte = 0;
                             break;
@@ -234,7 +242,7 @@ void comm_receiver_task(void *param) {
             }  
         }
 
-        int readBytes = uart_read_bytes(UART_NUM_0, &commandData, sizeof(commandData), portMAX_DELAY);
+        int readBytes = uartWired.receiveData(&commandData, sizeof(commandData), portMAX_DELAY);
         if (readBytes == sizeof(commandData)) {
             // todo: add checking for header, CRC, ... to check the correctness of the packet
             // commandData = commandDataPacket.commandData;
@@ -258,7 +266,7 @@ void comm_sender_task(void *param) {
     
     ESP_LOGI(__func__, "Comm sender Task begins");
     Feedback_Data feedbackData;
-    Feedback_Data_Packet feedbackDataPacket;
+    Feedback_Data_Packet_UART feedbackDataPacket;
 
     while (1) {
         if( xQueueReceive( dataOutQueue, &feedbackData, portMAX_DELAY ) == pdTRUE) {
@@ -266,8 +274,7 @@ void comm_sender_task(void *param) {
             feedbackDataPacket.header = HEADER;
             feedbackDataPacket.feedBackData = feedbackData;
             feedbackDataPacket.timestamp = 0; // TODO: 
-            // uartWired.sendData(feedbackDataPacket, sizeof(Feedback_Data_Packet));
-            uart_write_bytes(UART_NUM_0, &feedbackDataPacket, sizeof(Feedback_Data_Packet));
+            uartWired.sendData(&feedbackDataPacket, sizeof(Feedback_Data_Packet_UART));
         }
     }
 
