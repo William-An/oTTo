@@ -26,6 +26,8 @@
 // OTTO Task priority defs 
 #define OTTO_INIT_TASK_PRI  20
 #define OTTO_TASK_PRI_10    10
+#define OTTO_TASK_PRI_9    9
+#define OTTO_TASK_PRI_8     8
 #define OTTO_TASK_PRI_7     7
 #define OTTO_TASK_PRI_6     6
 #define OTTO_TASK_PRI_4     4
@@ -34,10 +36,12 @@
 #define OTTO_TASK_PRI_1     1
 #define OTTO_IMU_TASK_PRI   OTTO_TASK_PRI_7
 #define OTTO_MOTOR_TASK_PRI OTTO_TASK_PRI_7
-#define OTTO_COMM_TASK_PRI  OTTO_TASK_PRI_6
-#define OTTO_DISP_TASK_PRI  OTTO_TASK_PRI_7
+#define OTTO_COMM_RECEIVER_TASK_PRI  OTTO_TASK_PRI_9
+#define OTTO_COMM_SENDER_TASK_PRI  OTTO_TASK_PRI_9
+#define OTTO_DISP_TASK_PRI  OTTO_TASK_PRI_8
 // OTTO Queue configs
-#define OTTO_IMU_QUEUE_LEN  10
+#define OTTO_DATA_IN_QUEUE_LEN  10
+#define OTTO_DATA_OUT_QUEUE_LEN  20
 
 
 
@@ -71,7 +75,14 @@ void motor_task(void *param);
  *        with host PC and listen over queue
  * 
  */
-void comm_task(void *param);
+void comm_sender_task(void *param);
+
+/**
+ * @brief Initialize communication interface 
+ *        with host PC and listen over queue
+ * 
+ */
+void comm_receiver_task(void *param);
 
 /**
  * @brief Display unit init and task

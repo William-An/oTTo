@@ -392,7 +392,8 @@ esp_err_t LCD1602::set_left_to_right(bool en) {
 esp_err_t LCD1602::enable_auto_scroll(bool en) {
     esp_err_t err = ESP_FAIL;   
     
-    err = write_command(en?COMMAND_ENTRY_MODE_SET | FLAG_ENTRY_MODE_SET_ENTRY_SHIFT_ON: COMMAND_ENTRY_MODE_SET | ~FLAG_ENTRY_MODE_SET_ENTRY_SHIFT_ON);
+    err = write_command(en?COMMAND_ENTRY_MODE_SET | FLAG_ENTRY_MODE_SET_ENTRY_SHIFT_ON:
+     COMMAND_ENTRY_MODE_SET | ~FLAG_ENTRY_MODE_SET_ENTRY_SHIFT_ON);
 
     return ESP_OK;
 }
