@@ -64,7 +64,7 @@ void app_main(void)
     // printf("    |:|  |        \\::/  /       \\::/__/       \\::/  /                  \n");
     // printf("     \\|__|         \\/__/         ~~            \\/__/                   \n");   
     // printf("\n");
-    printf("Developed by Weili An, Xin Du, Yuqing Fan, Ruichao Zhang at Purdue University\n");
+    printf("Developed by Weili An, Xin Du, Yuqing Fan, Ruichao dZhang at Purdue University\n");
     // printf("Current version: v0.0.1a\n"); 
     // printf("\n");           
     // Init task need to have to priority to ensure the
@@ -176,7 +176,7 @@ void imu_task(void *param) {
         ESP_ERROR_CHECK(imu.updateAll());
         imu.runFusion();
         eulerAngles = imu.getEulerAngles();
-        ESP_LOGD(__func__, "r%.2frp%.2fpy%.2fy", eulerAngles.roll, eulerAngles.pitch, eulerAngles.yaw);
+        // ESP_LOGD(__func__, "r%.2frp%.2fpy%.2fy", eulerAngles.roll, eulerAngles.pitch, eulerAngles.yaw);
 
         feedbackData.leftAngularVelo = 0;
         feedbackData.rightAngularVelo = 0;
@@ -316,18 +316,18 @@ void motor_task(void *param) {
     motor_pin.en = GPIO_NUM_25;
     motor_pin.dir = GPIO_NUM_32;
     // TODO Connect the following pins to VCC
-    motor_pin.ms1 = GPIO_NUM_32;
-    motor_pin.ms2 = GPIO_NUM_32;
-    motor_pin.ms3 = GPIO_NUM_32;
+    motor_pin.ms1 = GPIO_NUM_21;
+    motor_pin.ms2 = GPIO_NUM_21;
+    motor_pin.ms3 = GPIO_NUM_21;
     ESP_ERROR_CHECK(ref_wheel.configIO(motor_pin));
 
     motor_pin.step = GPIO_NUM_18;
     motor_pin.en = GPIO_NUM_4;
     motor_pin.dir = GPIO_NUM_19;
     // TODO Connect the following pins to VCC
-    motor_pin.ms1 = GPIO_NUM_32;
-    motor_pin.ms2 = GPIO_NUM_32;
-    motor_pin.ms3 = GPIO_NUM_32;
+    motor_pin.ms1 = GPIO_NUM_21;
+    motor_pin.ms2 = GPIO_NUM_21;
+    motor_pin.ms3 = GPIO_NUM_21;
     ESP_ERROR_CHECK(ops_wheel.configIO(motor_pin));
     Command_Data commandData;
     while(1) {

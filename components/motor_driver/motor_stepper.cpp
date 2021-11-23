@@ -43,7 +43,7 @@ esp_err_t A4988_Driver::configIO(MotorIOConfig_t motorIO) {
     this->motorIO = motorIO;
 
     // enable the desired GPIOs
-    int normalOutputSel = (1ULL << motorIO.dir) | (1ULL << motorIO.en) | 
+    uint64_t normalOutputSel = (1ULL << motorIO.dir) | (1ULL << motorIO.en) | 
                     (1ULL << motorIO.ms1) | (1ULL << motorIO.ms2)  | (1ULL << motorIO.ms3);
     
     gpio_config_t io_conf;
