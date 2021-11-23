@@ -132,22 +132,21 @@ esp_err_t LCD1602::begin(i2c_port_t portNum) {
     
     
     // Home
-   // err = write_command(COMMAND_RETURN_HOME);
-    
-    ESP_ERROR_CHECK(err);
-    ets_delay_us(600);
+   // err = write_command(COMMAND_RETURN_HOME);  
+   err = reset();
+   ESP_ERROR_CHECK(err);
     
     err = clear();
 
     err = enable_cursor(0);
     err = enable_blink(0);
 
-    const char *str = "it's a very long string ";
+    const char *str = "owergdfghgkhgjkffghdhfhjfhd";
     move_cursor(0, 0);
     write_string(str); 
     move_cursor(1,1);
     write_string("why"); 
-     err = enable_cursor(0);
+    err = enable_cursor(0);
     err = enable_blink(0);
 
 while(1){
