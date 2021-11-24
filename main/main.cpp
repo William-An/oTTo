@@ -72,7 +72,7 @@ void app_main(void)
     // printf("\n");           
     // Init task need to have to priority to ensure the
     // rest tasks can be properly initated
-    xTaskCreate(otto_init, "OTTO Init task", 2048, NULL, OTTO_INIT_TASK_PRI, NULL);
+    xTaskCreate(otto_init, "OTTO Init task", 4096, NULL, OTTO_INIT_TASK_PRI, NULL);
     // test_stepper();
 }
 
@@ -210,244 +210,238 @@ void imu_task(void *param) {
  * 
  * @param param 
  */
-void comm_receiver_task(void *param) {
+// void comm_receiver_task(void *param) {
 
-    ESP_LOGI(__func__, "Comm receiver Task begins");
-    Command_Data_Packet_UART commandDataPacket;
-    Command_Data commandData;
+//     ESP_LOGI(__func__, "Comm receiver Task begins");
+//     Command_Data_Packet_UART commandDataPacket;
+//     Command_Data commandData;
 
-    // Flush current fifo before processing
-    ESP_ERROR_CHECK(uart_flush(UART_NUM_0));
-    while (1) {
-        uint8_t headerByte;
+//     // Flush current fifo before processing
+//     ESP_ERROR_CHECK(uart_flush(UART_NUM_0));
+//     while (1) {
+//         uint8_t headerByte;
 
-        // Sync header bytes
-        while (1) {
-            int length = 0;
-            ESP_ERROR_CHECK(uart_get_buffered_data_len(UART_NUM_0, (size_t*)&length));
-            ESP_LOGI(__func__, "Buffer size: %d", length);
-            uartWired.receiveData(&headerByte, sizeof(headerByte), portMAX_DELAY);
-            if (headerByte == HEADER_BYTE1) {
-                uartWired.receiveData(&headerByte, sizeof(headerByte), portMAX_DELAY);
-                if (headerByte == HEADER_BYTE2) {
-                    uartWired.receiveData(&headerByte, sizeof(headerByte), portMAX_DELAY);
-                    if (headerByte == HEADER_BYTE3) {
-                        uartWired.receiveData(&headerByte, sizeof(headerByte), portMAX_DELAY);
-                        if (headerByte == HEADER_BYTE4) {
-                            headerByte = 0;
-                            break;
-                        }
-                    }
-                }
-            }  
-        }
+//         // Sync header bytes
+//         while (1) {
+//             int length = 0;
+//             ESP_ERROR_CHECK(uart_get_buffered_data_len(UART_NUM_0, (size_t*)&length));
+//             ESP_LOGI(__func__, "Buffer size: %d", length);
+//             uartWired.receiveData(&headerByte, sizeof(headerByte), portMAX_DELAY);
+//             if (headerByte == HEADER_BYTE1) {
+//                 uartWired.receiveData(&headerByte, sizeof(headerByte), portMAX_DELAY);
+//                 if (headerByte == HEADER_BYTE2) {
+//                     uartWired.receiveData(&headerByte, sizeof(headerByte), portMAX_DELAY);
+//                     if (headerByte == HEADER_BYTE3) {
+//                         uartWired.receiveData(&headerByte, sizeof(headerByte), portMAX_DELAY);
+//                         if (headerByte == HEADER_BYTE4) {
+//                             headerByte = 0;
+//                             break;
+//                         }
+//                     }
+//                 }
+//             }  
+//         }
 
-        int readBytes = uartWired.receiveData(&commandData, sizeof(commandData), portMAX_DELAY);
-        if (readBytes == sizeof(commandData)) {
-            // todo: add checking for header, CRC, ... to check the correctness of the packet
-            // commandData = commandDataPacket.commandData;
-            ESP_LOGI(__func__, "Comm receiver Task: received one packet: omega_left: %.2f", commandData.leftAngularVelo);
-            if (xQueueSendToBack( dataInQueue, &commandData, ( TickType_t ) 0 ) != pdPASS ) {
-                ESP_LOGI(__func__, "Comm receiver Task: queue full");
-            }
-        }
-    }
+//         int readBytes = uartWired.receiveData(&commandData, sizeof(commandData), portMAX_DELAY);
+//         if (readBytes == sizeof(commandData)) {
+//             // todo: add checking for header, CRC, ... to check the correctness of the packet
+//             // commandData = commandDataPacket.commandData;
+//             ESP_LOGI(__func__, "Comm receiver Task: received one packet: omega_left: %.2f", commandData.leftAngularVelo);
+//             if (xQueueSendToBack( dataInQueue, &commandData, ( TickType_t ) 0 ) != pdPASS ) {
+//                 ESP_LOGI(__func__, "Comm receiver Task: queue full");
+//             }
+//         }
+//     }
 
-    ESP_LOGE(__func__, "COMM receiver Task quit unexpectedly");
-    vTaskDelete(NULL);
-}
+//     ESP_LOGE(__func__, "COMM receiver Task quit unexpectedly");
+//     vTaskDelete(NULL);
+// }
 
 /**
  * @brief Init communication sender
  * 
  * @param param 
  */
-void comm_sender_task(void *param) {
+// void comm_sender_task(void *param) {
     
-    ESP_LOGI(__func__, "Comm sender Task begins");
-    Feedback_Data feedbackData;
-    Feedback_Data_Packet_UART feedbackDataPacket;
+//     ESP_LOGI(__func__, "Comm sender Task begins");
+//     Feedback_Data feedbackData;
+//     Feedback_Data_Packet_UART feedbackDataPacket;
 
-    while (1) {
-        if( xQueueReceive( dataOutQueue, &feedbackData, portMAX_DELAY ) == pdTRUE) {
-            feedbackDataPacket.CRC = 0; // TODO: 
-            feedbackDataPacket.header = HEADER;
-            feedbackDataPacket.feedBackData = feedbackData;
-            feedbackDataPacket.timestamp = 0; // TODO: 
-<<<<<<< HEAD
-            uartWired.sendData(&feedbackDataPacket, sizeof(Feedback_Data_Packet_UART));
-=======
-            // uartWired.sendData(feedbackDataPacket, sizeof(Feedback_Data_Packet));
-            // Hard code 44 bytes to avoid extra bytes sent to serial
-            uart_write_bytes(UART_NUM_0, &feedbackDataPacket, 44);
->>>>>>> 1d4272a7630f7912214a16addc5bf42b9d7eb130
-        }
-    }
+//     while (1) {
+//         if( xQueueReceive( dataOutQueue, &feedbackData, portMAX_DELAY ) == pdTRUE) {
+//             feedbackDataPacket.CRC = 0; // TODO: 
+//             feedbackDataPacket.header = HEADER;
+//             feedbackDataPacket.feedBackData = feedbackData;
+//             feedbackDataPacket.timestamp = 0; // TODO: 
+//             uartWired.sendData(&feedbackDataPacket, sizeof(Feedback_Data_Packet_UART));
+//         }
+//     }
 
-    ESP_LOGE(__func__, "COMM sender Task quit unexpectedly");
-    vTaskDelete(NULL);
-}
+//     ESP_LOGE(__func__, "COMM sender Task quit unexpectedly");
+//     vTaskDelete(NULL);
+// }
 
 /**
  * @brief Init lcd 
  * 
  * @param param 
  */
-void display_task(void *param) {
-    Command_Data commandData;
-    LCD1602 lcd(0b0100000, 0b0100111);
-    ESP_ERROR_CHECK(lcd.begin(OTTO_I2C_PORT_NUM));
-    while(1) {
-        if( xQueuePeek( dataInQueue, (void*) &( commandData ), pdMS_TO_TICKS( 100 ) ) ) {
-            // ESP_LOGE(__func__, "received. %f", commandData);
-            // todo: display the received data
-             char leftvelo[100];
-             sprintf(str,"%f",commandData.leftAngularVelo);
-             char rightvelo[100];
-             sprintf(str,"%f",commandData.rightAngularVelo);
-             char leftang[100];
-             sprintf(str,"%f",commandData.angleRotatedLeftMotor);
-             char rightang[100];
-             sprintf(str,"%f",commandData.angleRotatedRightMotor);
-            // lcd.write_string(str);
-            write_command("LAV"+leftvelo);
+// void display_task(void *param) {
+//     Command_Data commandData;
+//     LCD1602 lcd(0b0100000, 0b0100111);
+//     ESP_ERROR_CHECK(lcd.begin(OTTO_I2C_PORT_NUM));
+//     while(1) {
+//         if( xQueuePeek( dataInQueue, (void*) &( commandData ), pdMS_TO_TICKS( 100 ) ) ) {
+//             // ESP_LOGE(__func__, "received. %f", commandData);
+//             // todo: display the received data
+//              char leftvelo[100];
+//              sprintf(str,"%f",commandData.leftAngularVelo);
+//              char rightvelo[100];
+//              sprintf(str,"%f",commandData.rightAngularVelo);
+//              char leftang[100];
+//              sprintf(str,"%f",commandData.angleRotatedLeftMotor);
+//              char rightang[100];
+//              sprintf(str,"%f",commandData.angleRotatedRightMotor);
+//             // lcd.write_string(str);
+//             write_command("LAV"+leftvelo);
 
  
         
-        // const char *menuu[3] = { "mac address", "orientation", "motor angle", "motor velocity"};
-        // const char *ori[3] = { "yaw", "pitch", "roll"};
-        // const char *mac[2] = { "mac addr1", "mac addr2"};
-        // const char *motor_ang[2] = { leftang, rightang};
-        // const char *motor_velo[2] = { leftvelo, rightvelo};
-        // const char *str = menuu[i];  
-        // err = readReg(switch_addr, MCP23008_REG_GPIO, &sw_var, 1);
-        // //printf("sw var%d \n",~sw_var);
-        // uint8_t up = ~sw_var & 0b00001;      //gp 0
-        // uint8_t down = ~sw_var & 0b00010;    //gp 1
-        // uint8_t menu = ~sw_var & 0b00100;    //gp 2
-        // uint8_t left = ~sw_var & 0b01000;    //gp 3
-        // uint8_t right = ~sw_var & 0b10000;   //gp 4
-        // if (i > 2 ){
-        //     i = 0;
-        // }
-        // if (i < 0){ 
-        //     i = 2;
-        // }
+//         // const char *menuu[3] = { "mac address", "orientation", "motor angle", "motor velocity"};
+//         // const char *ori[3] = { "yaw", "pitch", "roll"};
+//         // const char *mac[2] = { "mac addr1", "mac addr2"};
+//         // const char *motor_ang[2] = { leftang, rightang};
+//         // const char *motor_velo[2] = { leftvelo, rightvelo};
+//         // const char *str = menuu[i];  
+//         // err = readReg(switch_addr, MCP23008_REG_GPIO, &sw_var, 1);
+//         // //printf("sw var%d \n",~sw_var);
+//         // uint8_t up = ~sw_var & 0b00001;      //gp 0
+//         // uint8_t down = ~sw_var & 0b00010;    //gp 1
+//         // uint8_t menu = ~sw_var & 0b00100;    //gp 2
+//         // uint8_t left = ~sw_var & 0b01000;    //gp 3
+//         // uint8_t right = ~sw_var & 0b10000;   //gp 4
+//         // if (i > 2 ){
+//         //     i = 0;
+//         // }
+//         // if (i < 0){ 
+//         //     i = 2;
+//         // }
         
-        // //printf("sw var%d \n up%d\n",sw_var,up);
-        // //printf("buttons = up %d down %d menu %d left %d right %d \n", up, down, menu, left, right);
-        // if(up){
-        //     printf("u");
-        //     err = move_cursor(0, 0);
-        //     const char *str = menuu[i++];
-        //     err = write_string(str);
+//         // //printf("sw var%d \n up%d\n",sw_var,up);
+//         // //printf("buttons = up %d down %d menu %d left %d right %d \n", up, down, menu, left, right);
+//         // if(up){
+//         //     printf("u");
+//         //     err = move_cursor(0, 0);
+//         //     const char *str = menuu[i++];
+//         //     err = write_string(str);
         
-        // }
-        // if(down){
-        //     printf("d");
-        //     err = move_cursor(0, 0);
-        //     const char *str = menuu[i--];
-        //     err = write_string(str);
+//         // }
+//         // if(down){
+//         //     printf("d");
+//         //     err = move_cursor(0, 0);
+//         //     const char *str = menuu[i--];
+//         //     err = write_string(str);
         
-        // }
-        // if(menu){
-        //     printf("m");
-        //     err = move_cursor(0, 0);
-        //     err = clear();
-        //     err = write_string("Main Menu");
-        //     key = ~key;
-        // }
-        // if(left){
-        //     printf("l");
-        //     if (strcmp(str, "motor velo")){
-        //         err = move_cursor(0, 0);
-        //         err = clear();
-        //         const char *info = motor_velo[1];
-        //         err = write_string(motor_velo[0]);
-        //         err = move_cursor(0, 1);
-        //         err = write_string(motor_velo[1]);
+//         // }
+//         // if(menu){
+//         //     printf("m");
+//         //     err = move_cursor(0, 0);
+//         //     err = clear();
+//         //     err = write_string("Main Menu");
+//         //     key = ~key;
+//         // }
+//         // if(left){
+//         //     printf("l");
+//         //     if (strcmp(str, "motor velo")){
+//         //         err = move_cursor(0, 0);
+//         //         err = clear();
+//         //         const char *info = motor_velo[1];
+//         //         err = write_string(motor_velo[0]);
+//         //         err = move_cursor(0, 1);
+//         //         err = write_string(motor_velo[1]);
                 
-        //     }
-        //     if (strcmp(str, "motor angle")){
-        //         err = move_cursor(0, 0);
-        //         err = clear();
-        //         const char *info = motor_ang[1];
-        //         err = write_string(motor_ang[0]);
-        //         err = move_cursor(0, 1);
-        //         err = write_string(motor_ang[1]);
+//         //     }
+//         //     if (strcmp(str, "motor angle")){
+//         //         err = move_cursor(0, 0);
+//         //         err = clear();
+//         //         const char *info = motor_ang[1];
+//         //         err = write_string(motor_ang[0]);
+//         //         err = move_cursor(0, 1);
+//         //         err = write_string(motor_ang[1]);
                 
-        //     }
+//         //     }
 
 
         
-        // }
-        // if(right){
-        //     printf("r");
-        //     if (strcmp(info,motor_ang[1])){
-        //         err = move_cursor(0, 0);
-        //         err = clear();
-        //         err = write_string("motor angle");
-        //         str = "motor angle";
-        //         i = 2;
-        //     }
-        //     if (strcmp(info,motor_velo[1])){
-        //         err = move_cursor(0, 0);
-        //         err = clear();
-        //         err = write_string("motor velocity");
-        //         str = "motor velocity";
-        //         i = 3;
-        //     }
+//         // }
+//         // if(right){
+//         //     printf("r");
+//         //     if (strcmp(info,motor_ang[1])){
+//         //         err = move_cursor(0, 0);
+//         //         err = clear();
+//         //         err = write_string("motor angle");
+//         //         str = "motor angle";
+//         //         i = 2;
+//         //     }
+//         //     if (strcmp(info,motor_velo[1])){
+//         //         err = move_cursor(0, 0);
+//         //         err = clear();
+//         //         err = write_string("motor velocity");
+//         //         str = "motor velocity";
+//         //         i = 3;
+//         //     }
 
-        // }
+//         // }
         
-        // ets_delay_us(250000); 
-        }
+//         // ets_delay_us(250000); 
+//         }
 
-        // todo: check button status
-    }
-}
+//         // todo: check button status
+//     }
+// }
 
 /**
  * @brief Motor task
  * 
  * @param param 
  */
-void motor_task(void *param) {
-    A4988_Driver ref_wheel;
+// void motor_task(void *param) {
+//     A4988_Driver ref_wheel;
 
-    Nema17Config_t nema17;
-    nema17.fullStep = 1.8;
-    A4988_Driver ops_wheel (SIXTEENTH_STEP, OPPOSITE, nema17);
+//     Nema17Config_t nema17;
+//     nema17.fullStep = 1.8;
+//     A4988_Driver ops_wheel (SIXTEENTH_STEP, OPPOSITE, nema17);
 
-    MotorIOConfig_t motor_pin;
-    motor_pin.step = GPIO_NUM_33;
-    motor_pin.en = GPIO_NUM_25;
-    motor_pin.dir = GPIO_NUM_32;
-    // TODO Connect the following pins to VCC
-    motor_pin.ms1 = GPIO_NUM_21;
-    motor_pin.ms2 = GPIO_NUM_21;
-    motor_pin.ms3 = GPIO_NUM_21;
-    ESP_ERROR_CHECK(ref_wheel.configIO(motor_pin));
+//     MotorIOConfig_t motor_pin;
+//     motor_pin.step = GPIO_NUM_33;
+//     motor_pin.en = GPIO_NUM_25;
+//     motor_pin.dir = GPIO_NUM_32;
+//     // TODO Connect the following pins to VCC
+//     motor_pin.ms1 = GPIO_NUM_21;
+//     motor_pin.ms2 = GPIO_NUM_21;
+//     motor_pin.ms3 = GPIO_NUM_21;
+//     ESP_ERROR_CHECK(ref_wheel.configIO(motor_pin));
 
-    motor_pin.step = GPIO_NUM_18;
-    motor_pin.en = GPIO_NUM_4;
-    motor_pin.dir = GPIO_NUM_19;
-    // TODO Connect the following pins to VCC
-    motor_pin.ms1 = GPIO_NUM_21;
-    motor_pin.ms2 = GPIO_NUM_21;
-    motor_pin.ms3 = GPIO_NUM_21;
-    ESP_ERROR_CHECK(ops_wheel.configIO(motor_pin));
-    Command_Data commandData;
-    while(1) {
-        if( xQueueReceive( dataInQueue, &commandData, portMAX_DELAY) == pdTRUE ) {
-            ESP_LOGI(__func__, "motor_task received command");
-            // todo: use the data to drive the motor accordingly;
-            ESP_LOGI(__func__, "commandData.leftAngularVelo: %f", commandData.leftAngularVelo);
-            ESP_LOGI(__func__, "commandData.rightAngularVelo: %f", commandData.rightAngularVelo);
-            ESP_ERROR_CHECK(ref_wheel.setContinuous(commandData.leftAngularVelo));
-            ESP_ERROR_CHECK(ops_wheel.setContinuous(commandData.rightAngularVelo));
-        } else {
-            ESP_LOGW(__func__, "fail to retrieve item for motor");
-        }
-    }
-}
+//     motor_pin.step = GPIO_NUM_18;
+//     motor_pin.en = GPIO_NUM_4;
+//     motor_pin.dir = GPIO_NUM_19;
+//     // TODO Connect the following pins to VCC
+//     motor_pin.ms1 = GPIO_NUM_21;
+//     motor_pin.ms2 = GPIO_NUM_21;
+//     motor_pin.ms3 = GPIO_NUM_21;
+//     ESP_ERROR_CHECK(ops_wheel.configIO(motor_pin));
+//     Command_Data commandData;
+//     while(1) {
+//         if( xQueueReceive( dataInQueue, &commandData, portMAX_DELAY) == pdTRUE ) {
+//             ESP_LOGI(__func__, "motor_task received command");
+//             // todo: use the data to drive the motor accordingly;
+//             ESP_LOGI(__func__, "commandData.leftAngularVelo: %f", commandData.leftAngularVelo);
+//             ESP_LOGI(__func__, "commandData.rightAngularVelo: %f", commandData.rightAngularVelo);
+//             ESP_ERROR_CHECK(ref_wheel.setContinuous(commandData.leftAngularVelo));
+//             ESP_ERROR_CHECK(ops_wheel.setContinuous(commandData.rightAngularVelo));
+//         } else {
+//             ESP_LOGW(__func__, "fail to retrieve item for motor");
+//         }
+//     }
+// }

@@ -102,6 +102,10 @@ int EspNowWireless :: sendData(const void* data, size_t size) {
     return esp_now_send(broadcast_mac, (uint8_t *) data, size);
 }
 
+// todo: why receiveDataCB drops some packets from PC
+// maybe broadcast address?
+// maybe matlab side?
+
 void receiveDataCB(const uint8_t *mac_addr, const uint8_t *data, int data_len) {
     // if (esp_now_is_peer_exist(mac_addr) == false) {
     //     esp_now_peer_info_t *peer = malloc(sizeof(esp_now_peer_info_t));
@@ -130,6 +134,8 @@ void receiveDataCB(const uint8_t *mac_addr, const uint8_t *data, int data_len) {
         if (xQueueSendToBack( _dataInQueue, &commandData, ( TickType_t ) 0 ) != pdPASS ) {
             ESP_LOGI(__func__, "Comm receiver Task: queue full");
         }
+    } else {
+        ESP_LOGI(__func__, "ELSE! Comm receiver Task: received one packet");
     }
 }
 
