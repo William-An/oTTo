@@ -73,7 +73,7 @@ void app_main(void)
     printf("\n");           
     // Init task need to have to priority to ensure the
     // rest tasks can be properly initated
-    xTaskCreate(otto_init, "OTTO Init task", 2048, NULL, OTTO_INIT_TASK_PRI, NULL);
+    xTaskCreate(otto_init, "OTTO Init task", 4096, NULL, OTTO_INIT_TASK_PRI, NULL);
     // test_stepper();
 }
 
@@ -102,6 +102,9 @@ void otto_init(void *param) {
     // I2C Port initialization
     ESP_LOGI(__func__, "Init I2C port %d", OTTO_I2C_PORT_NUM);
     ESP_ERROR_CHECK(i2c_init(OTTO_I2C_PORT_NUM));
+
+    // UART initialization
+    ESP_ERROR_CHECK(uart_init(OTTO_UART_PORT_NUM));
 
     // Get Mac addr
     ESP_ERROR_CHECK(get_macAddr());
@@ -190,13 +193,13 @@ void comm_receiver_task(void *param) {
     EspNowWireless espNow = *((EspNowWireless*)param);
 
     // Flush current fifo before processing
-    ESP_ERROR_CHECK(uart_flush(UART_NUM_0));
+    ESP_ERROR_CHECK(uart_flush(OTTO_UART_PORT_NUM));
     while (1) {
         uint8_t headerByte;
 
         while (1) {
             int length = 0;
-            ESP_ERROR_CHECK(uart_get_buffered_data_len(UART_NUM_0, (size_t*)&length));
+            ESP_ERROR_CHECK(uart_get_buffered_data_len(OTTO_UART_PORT_NUM, (size_t*)&length));
             ESP_LOGI(__func__, "Buffer size: %d", length);
             uartWired.receiveData(&headerByte, sizeof(headerByte), portMAX_DELAY);
             if (headerByte == HEADER_BYTE1) {

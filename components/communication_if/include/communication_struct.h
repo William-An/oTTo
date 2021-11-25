@@ -1,6 +1,4 @@
-static const int RX_BUF_SIZE = 128;
-static const int TX_BUF_SIZE = 0;
-
+// TODO Weili: Create a func to check for header match
 const uint32_t HEADER = 0x92384233;
 const uint8_t HEADER_BYTE1 = 0x33;
 const uint8_t HEADER_BYTE2 = 0x42;

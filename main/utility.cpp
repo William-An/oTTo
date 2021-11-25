@@ -11,6 +11,7 @@
 
 #include <inttypes.h>
 #include "driver/i2c.h"
+#include "driver/uart.h"
 #include "esp_err.h"
 #include "esp_log.h"
 #include "otto.h"
@@ -23,6 +24,9 @@
 // I2C Conf
 #define I2C_MASTER_TX_BUF_DISABLE   0                          /*!< I2C master doesn't need buffer */
 #define I2C_MASTER_RX_BUF_DISABLE   0                          /*!< I2C master doesn't need buffer */
+
+#define RX_BUF_SIZE 128
+#define TX_BUF_SIZE 0
 
 /**
  * @brief Init I2C port
@@ -51,6 +55,23 @@ esp_err_t i2c_init(uint8_t i2c_portNum) {
             i2c_portNum, default_conf.mode, 
             I2C_MASTER_RX_BUF_DISABLE, I2C_MASTER_TX_BUF_DISABLE, 0));
 
+    return ESP_OK;
+}
+
+esp_err_t uart_init(uint8_t uart_portNum) {
+    const uart_config_t uart_config = {
+        .baud_rate = 115200,
+        .data_bits = UART_DATA_8_BITS,
+        .parity = UART_PARITY_EVEN,
+        .stop_bits = UART_STOP_BITS_1,
+        .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
+        .source_clk = UART_SCLK_APB,
+    };
+    
+    ESP_ERROR_CHECK(uart_driver_install(uart_portNum, RX_BUF_SIZE * 2, TX_BUF_SIZE * 2, 0, NULL, 0));
+    ESP_ERROR_CHECK(uart_param_config(UART_NUM_0, &uart_config));
+    ESP_ERROR_CHECK(uart_set_pin(0, 1, 3, -1, -1));
+    
     return ESP_OK;
 }
 

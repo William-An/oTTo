@@ -18,9 +18,12 @@
 #include "freertos/task.h"
 #include "esp_err.h"
 #include "driver/i2c.h"
+#include "driver/uart.h"
 
 // Use port 0 of I2C
 #define OTTO_I2C_PORT_NUM   0
+// Use port 0 of UART
+#define OTTO_UART_PORT_NUM  UART_NUM_0
 // IMU Update rate
 #define OTTO_IMU_RATE_HZ    100  
 // OTTO Task priority defs 
@@ -49,6 +52,7 @@
 
 // Peripheral control
 esp_err_t i2c_init(uint8_t i2c_portNum);
+esp_err_t uart_init(uint8_t uart_portNum);
 esp_err_t get_macAddr();
 
 // Initialization tasks
