@@ -22,6 +22,7 @@ typedef struct Command_Data_Packet_UART {
     uint32_t CRC;
 } Command_Data_Packet_UART;
 
+// 28 bytes
 typedef struct Command_Data_Packet_ESP_NOW {
     Command_Data commandData;
     uint64_t timestamp;

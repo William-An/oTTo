@@ -201,6 +201,9 @@ void comm_receiver_task(void *param) {
             int length = 0;
             ESP_ERROR_CHECK(uart_get_buffered_data_len(OTTO_UART_PORT_NUM, (size_t*)&length));
             ESP_LOGI(__func__, "Buffer size: %d", length);
+            // TODO Weili: Did not check for possible restart?
+            // TODO Like: H1 H2 H1 H2 H3 H4 DATA_PACKET
+            // TODO Weili: Use bit shift op for these
             uartWired.receiveData(&headerByte, sizeof(headerByte), portMAX_DELAY);
             if (headerByte == HEADER_BYTE1) {
                 uartWired.receiveData(&headerByte, sizeof(headerByte), portMAX_DELAY);
@@ -211,18 +214,26 @@ void comm_receiver_task(void *param) {
                         if (headerByte == HEADER_BYTE4) {
                             headerByte = 0;
                             break;
+                        } else {
+                            ESP_LOGI(__func__, "Failed at header byte 4, exp: %x act: %x", HEADER_BYTE4, headerByte);
                         }
+                    } else {
+                        ESP_LOGI(__func__, "Failed at header byte 3, exp: %x act: %x", HEADER_BYTE3, headerByte);
                     }
+                } else {
+                    ESP_LOGI(__func__, "Failed at header byte 2, exp: %x act: %x", HEADER_BYTE2, headerByte);
                 }
+            } else {
+                ESP_LOGI(__func__, "Failed at header byte 1, exp: %x act: %x", HEADER_BYTE1, headerByte);
             }  
         }
-
-        int readBytes = uartWired.receiveData(&commandDataPacketEspNow, sizeof(commandDataPacketEspNow), portMAX_DELAY);
-        if (readBytes == sizeof(commandDataPacketEspNow)) {
+        // TODO Weili: MATLAB does not pad the struct, thus right now just hard-code the value in
+        int readBytes = uartWired.receiveData(&commandDataPacketEspNow, 28, portMAX_DELAY);
+        if (readBytes == 28) {
             // todo: add checking for header, CRC, ... to check the correctness of the packet
             // commandData = commandDataPacket.commandData;
             ESP_LOGI(__func__, "Comm receiver Task: received one packet: omega_left: %.2f", commandDataPacketEspNow.commandData.leftAngularVelo);
-            espNow.sendData(&commandDataPacketEspNow, sizeof(commandDataPacketEspNow));
+            espNow.sendData(&commandDataPacketEspNow, 28);
         }
     }
 
