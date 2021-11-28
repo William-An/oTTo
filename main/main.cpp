@@ -20,7 +20,6 @@
 #include "imu_sensor.h"
 #include "imu_icm_20948.h"
 #include "communication_if.h"
-#include "communication_struct.h"
 #include "uart_wired.h"
 #include "esp_now_wireless.h"
 #include "otto.h"
@@ -103,15 +102,18 @@ void otto_init(void *param) {
     ESP_LOGI(__func__, "Init I2C port %d", OTTO_I2C_PORT_NUM);
     ESP_ERROR_CHECK(i2c_init(OTTO_I2C_PORT_NUM));
 
+    // data in queue initialization
+    ESP_LOGI(__func__, "Init data in Queue");
+    dataInQueue = xQueueCreate(OTTO_DATA_IN_QUEUE_LEN, sizeof(Feedback_Data));
+
     // UART initialization
     ESP_ERROR_CHECK(uart_init(OTTO_UART_PORT_NUM));
 
+    // ESPNOW initialization
+    ESP_ERROR_CHECK(espnow_init(dataInQueue, NULL));
+
     // Get Mac addr
     ESP_ERROR_CHECK(get_macAddr());
-
-    // Communication initialization
-    ESP_LOGI(__func__, "Init communication with ESP_NOW");
-    static EspNowWireless espNow(false, dataInQueue, dataOutQueue);
     
     // COMM Sender task
     // ESP_LOGI(__func__, "Launch Comm sender task");
@@ -119,70 +121,14 @@ void otto_init(void *param) {
 
     // COMM Receiver task
     ESP_LOGI(__func__, "Launch Comm receiver task");
-    xTaskCreate(comm_receiver_task, "Comm receiver Task", 4096, (void*) &espNow, OTTO_COMM_RECEIVER_TASK_PRI, NULL);
+    xTaskCreate(comm_receiver_task, "Comm receiver Task", 4096, NULL, OTTO_COMM_RECEIVER_TASK_PRI, NULL);
 
     // Clean up init task
     vTaskDelete(NULL);
 }
 
-// TODO Weird, IMU updates 1/2 the freq given:
-// TODO If update every 5 ticks, the comm will get result every 10 ticks
-// TODO But the tick updates to 1kHz, it is now working properly
 /**
- * @brief IMU subsystem task, init IMU and take constant measurement
- * 
- * @param param 
- */
-void imu_task(void *param) {
-    // Variable used
-    AngleVector3_t eulerAngles; // Tmp var to hold imu measurement
-    TickType_t xLastWakeTime;   // Last time the measurement is run
-    TickType_t xImuFrequency;   // Measurement update frequency
-    BaseType_t xErr;            // RTOS call error status
-    Feedback_Data feedbackData;
-
-    ESP_LOGI(__func__, "IMU Task begins");
-
-    // Assume I2C initialized
-    ICM20948IMU imu(OTTO_IMU_RATE_HZ, ICM20948_I2CADDR_DEFAULT);
-    ESP_ERROR_CHECK(imu.begin(OTTO_I2C_PORT_NUM));
-
-    // Init loop vars
-    xLastWakeTime = xTaskGetTickCount();
-    xImuFrequency = 1000 / OTTO_IMU_RATE_HZ / portTICK_RATE_MS;
-    ESP_LOGI(__func__, "IMU Update per %d ticks", xImuFrequency);
-
-    while (1) {
-        // Delay according to update rate
-        vTaskDelayUntil(&xLastWakeTime, xImuFrequency);
-
-        // Gather imu data
-        ESP_ERROR_CHECK(imu.updateAll());
-        imu.runFusion();
-        eulerAngles = imu.getEulerAngles();
-        ESP_LOGD(__func__, "r%.2frp%.2fpy%.2fy", eulerAngles.roll, eulerAngles.pitch, eulerAngles.yaw);
-
-        feedbackData.leftAngularVelo = 0;
-        feedbackData.rightAngularVelo = 0;
-        feedbackData.angleRotatedLeftMotor = 0;
-        feedbackData.angleRotatedRightMotor = 0;
-        feedbackData.yaw = eulerAngles.yaw;
-        feedbackData.pitch = eulerAngles.pitch;
-        feedbackData.roll = eulerAngles.roll;
-
-        // Send data onto queue, not waiting for slot as can just
-        // use next measurement
-        if (xQueueSendToBack(dataOutQueue, &feedbackData, portMAX_DELAY) == errQUEUE_FULL) {
-            ESP_LOGW(__func__, "IMU Queue full, cannot send");
-        }
-    }
-
-    ESP_LOGE(__func__, "IMU Task quit unexpectedly");
-    vTaskDelete(NULL);
-}
-
-/**
- * @brief Init communication receiver
+ * @brief Receive data from PC side through UART, it then sends the data out through ESPNOW
  * 
  * @param param 
  */
@@ -190,10 +136,13 @@ void comm_receiver_task(void *param) {
 
     ESP_LOGI(__func__, "Comm receiver Task begins");
     Command_Data_Packet_ESP_NOW commandDataPacketEspNow;
-    EspNowWireless espNow = *((EspNowWireless*)param);
+    
+    EspNowWireless espNowWireless(false);
+    UartWired uartWired(false);
 
     // Flush current fifo before processing
     ESP_ERROR_CHECK(uart_flush(OTTO_UART_PORT_NUM));
+
     while (1) {
         uint8_t headerByte;
 
@@ -233,7 +182,7 @@ void comm_receiver_task(void *param) {
             // todo: add checking for header, CRC, ... to check the correctness of the packet
             // commandData = commandDataPacket.commandData;
             ESP_LOGI(__func__, "Comm receiver Task: received one packet: omega_left: %.2f", commandDataPacketEspNow.commandData.leftAngularVelo);
-            espNow.sendData(&commandDataPacketEspNow, 28);
+            espNowWireless.sendData(&commandDataPacketEspNow, 28);
         }
     }
 
@@ -251,9 +200,10 @@ void comm_sender_task(void *param) {
     ESP_LOGI(__func__, "Comm sender Task begins");
     Feedback_Data feedbackData;
     Feedback_Data_Packet_UART feedbackDataPacket;
+    UartWired uartWired(false);
 
     while (1) {
-        if( xQueueReceive( dataOutQueue, &feedbackData, portMAX_DELAY ) == pdTRUE) {
+        if( xQueueReceive( dataInQueue, &feedbackData, portMAX_DELAY ) == pdTRUE) {
             feedbackDataPacket.CRC = 0; // TODO: 
             feedbackDataPacket.header = HEADER;
             feedbackDataPacket.feedBackData = feedbackData;
