@@ -141,24 +141,94 @@ esp_err_t LCD1602::begin(i2c_port_t portNum) {
     err = enable_cursor(0);
     err = enable_blink(0);
 
-    const char *str = "owergdfghgkhgjkffghdhfhjfhd";
-    move_cursor(0, 0);
-    write_string(str); 
-    move_cursor(1,1);
-    write_string("why"); 
-    err = enable_cursor(0);
-    err = enable_blink(0);
+    // const char *str = "owergdfghgkhgjkffghdhfhjfhd";
+    // move_cursor(0, 0);
+    // write_string(str); 
+    // move_cursor(1,1);
+    // write_string("why"); 
+    // err = enable_cursor(0);
+    // err = enable_blink(0);
+//scroll////////////////////
+// while(1){
+// set_scroll(RIGHT);
+// vTaskDelay(500/ portTICK_RATE_MS);
+
+//     }
+
+int cur_line = 1;
+uint8_t sw_var;
+uint8_t key = 0;//
+int i = 0;
+
 
 while(1){
-set_scroll(RIGHT);
-vTaskDelay(500/ portTICK_RATE_MS);
-    // for (int positionCounter2 = 0; positionCounter2 <5; positionCounter2++)
-    // {
-    //   set_scroll(RIGHT);  //Scrolls the contents of the display one space to the left.
-    //   //write_char('>');
-    //   vTaskDelay(500/ portTICK_RATE_MS);
-    // }
+    const char *menuu[3] = { ">mac address", ">orientation", ">motor info"};
+    const char *ori[3] = { "yaw", "pitch", "roll"};
+    const char *mac[2] = { "mac addr1", "mac addr2"};
+    const char *motor[2] = { "moter1 info", "motor2 info"};
+    const char *str = menuu[i];
+    err = readReg(switch_addr, MCP23008_REG_GPIO, &sw_var, 1);
+    //printf("sw var%d \n",~sw_var);
+    uint8_t up = ~sw_var & 0b00001;      //gp 0
+    uint8_t down = ~sw_var & 0b00010;    //gp 1
+    uint8_t menu = ~sw_var & 0b00100;    //gp 2
+    uint8_t left = ~sw_var & 0b01000;    //gp 3
+    uint8_t right = ~sw_var & 0b10000;   //gp 4
+    if (i > 2 ){
+        i = 0;
     }
+    if (i < 0){ 
+        i = 2;
+    }
+    
+    //printf("sw var%d \n up%d\n",sw_var,up);
+    //printf("buttons = up %d down %d menu %d left %d right %d \n", up, down, menu, left, right);
+    if(up){
+        printf("u");
+        err = move_cursor(0, 0);
+        const char *str = menuu[i++];
+        err = write_string(str);
+       
+    }
+    if(down){
+        printf("d");
+        err = move_cursor(0, 0);
+        const char *str = menuu[i--];
+        err = write_string(str);
+       
+    }
+    if(menu){
+        printf("m");
+        err = move_cursor(0, 0);
+        err = clear();
+        err = write_string("Main Menu");
+        key = ~key;
+    }
+    if(left){
+        printf("l");
+        if (strcmp(str, ">mac address")){
+            err = move_cursor(0, 0);
+            err = clear();
+            err = write_string(">>mac address info");
+            str = ">>mac address info";
+        }
+    
+    }
+    if(right){
+        printf("r");
+        if (strcmp(str,">>mac address info")){
+            err = move_cursor(0, 0);
+            err = clear();
+            err = write_string(">mac address");
+            str = ">mac address";
+        }
+    }
+    
+    ets_delay_us(250000); 
+}
+
+
+
     //clear();
     ESP_LOGI("Begin", "Done");
     vTaskDelay(300000 / portTICK_RATE_MS);
