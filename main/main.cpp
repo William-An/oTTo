@@ -116,16 +116,16 @@ void otto_init(void *param) {
     // IMU task
     // Pin IMU task to APP_CPU per ESP32 Guidelines: 
     //  https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/freertos-smp.html#floating-points
-    // ESP_LOGI(__func__, "Launch IMU task");
-    // xTaskCreatePinnedToCore(imu_task, "IMU Task", 8192, NULL, OTTO_IMU_TASK_PRI, NULL, APP_CPU_NUM);
+    ESP_LOGI(__func__, "Launch IMU task");
+    xTaskCreatePinnedToCore(imu_task, "IMU Task", 8192, NULL, OTTO_IMU_TASK_PRI, NULL, APP_CPU_NUM);
 
     // LCD task
     // ESP_LOGI(__func__, "Launch LCD task");
     // xTaskCreate(display_task, "LCD Task", 4096, NULL, OTTO_DISP_TASK_PRI, NULL);
 
     // Motor task
-    // ESP_LOGI(__func__, "Launch motor task");
-    // xTaskCreatePinnedToCore(motor_task, "motor Task", 4096, NULL, OTTO_MOTOR_TASK_PRI, NULL, PRO_CPU_NUM);
+    ESP_LOGI(__func__, "Launch motor task");
+    xTaskCreatePinnedToCore(motor_task, "motor Task", 4096, NULL, OTTO_MOTOR_TASK_PRI, NULL, PRO_CPU_NUM);
 
     // Communication initialization
     if (ESP_NOW_MODE) {
@@ -252,8 +252,20 @@ void comm_receiver_task(void *param) {
         if (readBytes == sizeof(commandData)) {
             // todo: add checking for header, CRC, ... to check the correctness of the packet
             // commandData = commandDataPacket.commandData;
-            ESP_LOGI(__func__, "Comm receiver Task: received one packet: omega_left: %.2f", commandData.leftAngularVelo);
-            if (xQueueSendToBack( dataInQueue, &commandData, ( TickType_t ) 0 ) != pdPASS ) {
+            ESP_LOGI(__func__, "UART: received one packet: omega_left: %.2f", commandData.leftAngularVelo);
+            // if (xQueueSendToBack( dataInQueue, &commandData, ( TickType_t ) 0 ) != pdPASS ) {
+            //     ESP_LOGI(__func__, "Comm receiver Task: queue full");
+            // }
+            Feedback_Data feedbackData;
+            feedbackData.leftAngularVelo = commandData.leftAngularVelo;
+            feedbackData.rightAngularVelo = commandData.rightAngularVelo;
+            feedbackData.angleRotatedLeftMotor = commandData.angleRotatedLeftMotor;
+            feedbackData.angleRotatedRightMotor = commandData.angleRotatedRightMotor;
+            feedbackData.yaw = 1;
+            feedbackData.pitch = 2;
+            feedbackData.roll = 3;
+
+            if (xQueueSendToBack( dataOutQueue, &feedbackData, ( TickType_t ) 0 ) != pdPASS ) {
                 ESP_LOGI(__func__, "Comm receiver Task: queue full");
             }
         }
@@ -272,22 +284,29 @@ void comm_sender_task(void *param) {
     
     ESP_LOGI(__func__, "Comm sender Task begins");
     Feedback_Data feedbackData;
-    Feedback_Data_Packet_UART feedbackDataPacket;
+    Feedback_Data_Packet_UART feedbackDataPacketUART;
+    Feedback_Data_Packet_ESP_NOW feedbackDataPacketESPNOW;
 
     UartWired uartWired(false);
     EspNowWireless espNowWireless(false);
 
     while (1) {
         if( xQueueReceive( dataOutQueue, &feedbackData, portMAX_DELAY ) == pdTRUE) {
-            feedbackDataPacket.CRC = 0; // TODO: 
-            feedbackDataPacket.header = HEADER;
-            feedbackDataPacket.feedBackData = feedbackData;
-            feedbackDataPacket.timestamp = 0; // TODO: 
 
             if (ESP_NOW_MODE) {
-                espNowWireless.sendData(&feedbackDataPacket, sizeof(Feedback_Data_Packet_UART));
+                feedbackDataPacketESPNOW.CRC = 0; // TODO: 
+                feedbackDataPacketESPNOW.feedBackData = feedbackData;
+                feedbackDataPacketESPNOW.timestamp = 0; // TODO: 
+                // ESP_LOGI(__func__, "About to send back data through ESP-NOW! yaw: %.2f", feedbackDataPacketESPNOW.feedBackData.yaw);
+                // ESP_LOGI(__func__, "About to send back data through ESP-NOW! yaw: %.2f", feedbackDataPacketESPNOW.feedBackData.pitch);
+                // ESP_LOGI(__func__, "About to send back data through ESP-NOW! yaw: %.2f", feedbackDataPacketESPNOW.feedBackData.roll);
+                espNowWireless.sendData(&feedbackDataPacketESPNOW, sizeof(Feedback_Data_Packet_ESP_NOW));
             } else {
-                uartWired.sendData(&feedbackDataPacket, sizeof(Feedback_Data_Packet_UART));
+                feedbackDataPacketUART.CRC = 0; // TODO: 
+                feedbackDataPacketUART.header = HEADER;
+                feedbackDataPacketUART.feedBackData = feedbackData;
+                feedbackDataPacketUART.timestamp = 0; // TODO: 
+                uartWired.sendData(&feedbackDataPacketUART, sizeof(Feedback_Data_Packet_UART));
             }
             
         }
@@ -421,42 +440,42 @@ void comm_sender_task(void *param) {
  * 
  * @param param 
  */
-// void motor_task(void *param) {
-//     A4988_Driver ref_wheel;
+void motor_task(void *param) {
+    A4988_Driver ref_wheel;
 
-//     Nema17Config_t nema17;
-//     nema17.fullStep = 1.8;
-//     A4988_Driver ops_wheel (SIXTEENTH_STEP, OPPOSITE, nema17);
+    Nema17Config_t nema17;
+    nema17.fullStep = 1.8;
+    A4988_Driver ops_wheel (SIXTEENTH_STEP, OPPOSITE, nema17);
 
-//     MotorIOConfig_t motor_pin;
-//     motor_pin.step = GPIO_NUM_33;
-//     motor_pin.en = GPIO_NUM_25;
-//     motor_pin.dir = GPIO_NUM_32;
-//     // TODO Connect the following pins to VCC
-//     motor_pin.ms1 = GPIO_NUM_21;
-//     motor_pin.ms2 = GPIO_NUM_21;
-//     motor_pin.ms3 = GPIO_NUM_21;
-//     ESP_ERROR_CHECK(ref_wheel.configIO(motor_pin));
+    MotorIOConfig_t motor_pin;
+    motor_pin.step = GPIO_NUM_33;
+    motor_pin.en = GPIO_NUM_25;
+    motor_pin.dir = GPIO_NUM_32;
+    // TODO Connect the following pins to VCC
+    motor_pin.ms1 = GPIO_NUM_21;
+    motor_pin.ms2 = GPIO_NUM_21;
+    motor_pin.ms3 = GPIO_NUM_21;
+    ESP_ERROR_CHECK(ref_wheel.configIO(motor_pin));
 
-//     motor_pin.step = GPIO_NUM_18;
-//     motor_pin.en = GPIO_NUM_4;
-//     motor_pin.dir = GPIO_NUM_19;
-//     // TODO Connect the following pins to VCC
-//     motor_pin.ms1 = GPIO_NUM_21;
-//     motor_pin.ms2 = GPIO_NUM_21;
-//     motor_pin.ms3 = GPIO_NUM_21;
-//     ESP_ERROR_CHECK(ops_wheel.configIO(motor_pin));
-//     Command_Data commandData;
-//     while(1) {
-//         if( xQueueReceive( dataInQueue, &commandData, portMAX_DELAY) == pdTRUE ) {
-//             ESP_LOGI(__func__, "motor_task received command");
-//             // todo: use the data to drive the motor accordingly;
-//             ESP_LOGI(__func__, "commandData.leftAngularVelo: %f", commandData.leftAngularVelo);
-//             ESP_LOGI(__func__, "commandData.rightAngularVelo: %f", commandData.rightAngularVelo);
-//             ESP_ERROR_CHECK(ref_wheel.setContinuous(commandData.leftAngularVelo));
-//             ESP_ERROR_CHECK(ops_wheel.setContinuous(commandData.rightAngularVelo));
-//         } else {
-//             ESP_LOGW(__func__, "fail to retrieve item for motor");
-//         }
-//     }
-// }
+    motor_pin.step = GPIO_NUM_18;
+    motor_pin.en = GPIO_NUM_4;
+    motor_pin.dir = GPIO_NUM_19;
+    // TODO Connect the following pins to VCC
+    motor_pin.ms1 = GPIO_NUM_21;
+    motor_pin.ms2 = GPIO_NUM_21;
+    motor_pin.ms3 = GPIO_NUM_21;
+    ESP_ERROR_CHECK(ops_wheel.configIO(motor_pin));
+    Command_Data commandData;
+    while(1) {
+        if( xQueueReceive( dataInQueue, &commandData, portMAX_DELAY) == pdTRUE ) {
+            ESP_LOGI(__func__, "motor_task received command");
+            // todo: use the data to drive the motor accordingly;
+            ESP_LOGI(__func__, "commandData.leftAngularVelo: %f", commandData.leftAngularVelo);
+            ESP_LOGI(__func__, "commandData.rightAngularVelo: %f", commandData.rightAngularVelo);
+            ESP_ERROR_CHECK(ref_wheel.setContinuous(commandData.leftAngularVelo));
+            ESP_ERROR_CHECK(ops_wheel.setContinuous(commandData.rightAngularVelo));
+        } else {
+            ESP_LOGW(__func__, "fail to retrieve item for motor");
+        }
+    }
+}
