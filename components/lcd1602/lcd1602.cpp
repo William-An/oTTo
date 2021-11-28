@@ -129,10 +129,7 @@ esp_err_t LCD1602::begin(i2c_port_t portNum) {
     ESP_ERROR_CHECK(err);
     if (err != ESP_OK)
         return err;
-    
-    
-    // Home
-   // err = write_command(COMMAND_RETURN_HOME);  
+
    err = reset();
    ESP_ERROR_CHECK(err);
     
@@ -141,25 +138,6 @@ esp_err_t LCD1602::begin(i2c_port_t portNum) {
     err = enable_cursor(0);
     err = enable_blink(0);
 
-    const char *str = "owergdfghgkhgjkffghdhfhjfhd";
-    move_cursor(0, 0);
-    write_string(str); 
-    move_cursor(1,1);
-    write_string("why"); 
-    err = enable_cursor(0);
-    err = enable_blink(0);
-
-while(1){
-set_scroll(RIGHT);
-vTaskDelay(500/ portTICK_RATE_MS);
-    // for (int positionCounter2 = 0; positionCounter2 <5; positionCounter2++)
-    // {
-    //   set_scroll(RIGHT);  //Scrolls the contents of the display one space to the left.
-    //   //write_char('>');
-    //   vTaskDelay(500/ portTICK_RATE_MS);
-    // }
-    }
-    //clear();
     ESP_LOGI("Begin", "Done");
     vTaskDelay(300000 / portTICK_RATE_MS);
 
