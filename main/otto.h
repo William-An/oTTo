@@ -18,6 +18,17 @@
 #include "freertos/task.h"
 #include "esp_err.h"
 #include "driver/i2c.h"
+#include "driver/uart.h"
+#include "esp_system.h"
+#include "esp_spi_flash.h"
+#include "esp_timer.h"
+#include "esp_event.h"
+#include "esp_netif.h"
+#include "esp_wifi.h"
+#include "esp_now.h"
+#include "nvs_flash.h"
+#include "string.h"
+#include "communication_struct.h"
 
 // Use port 0 of I2C
 #define OTTO_I2C_PORT_NUM   0
@@ -45,11 +56,12 @@
 
 #define ESP_NOW_MODE 1
 
-
-
 // Peripheral control
 esp_err_t i2c_init(uint8_t i2c_portNum);
 esp_err_t get_macAddr();
+esp_err_t uart_init(uint8_t uart_portNum);
+esp_err_t espnow_init(QueueHandle_t dataInQueue, QueueHandle_t dataOutQueue);
+void receiveDataCB(const uint8_t *mac_addr, const uint8_t *data, int data_len);
 
 // Initialization tasks
 // Tasks should abort on failed circumstances

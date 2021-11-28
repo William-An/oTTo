@@ -19,7 +19,6 @@
 #include "imu_sensor.h"
 #include "imu_icm_20948.h"
 #include "communication_if.h"
-#include "communication_struct.h"
 #include "uart_wired.h"
 #include "esp_now_wireless.h"
 #include "otto.h"
@@ -131,20 +130,24 @@ void otto_init(void *param) {
     // Communication initialization
     if (ESP_NOW_MODE) {
         ESP_LOGI(__func__, "Init communication with ESP_NOW");
-        EspNowWireless espNow(false, dataInQueue, dataOutQueue);
+        ESP_ERROR_CHECK(espnow_init(dataInQueue, dataOutQueue));
+
+        // COMM Sender task
+        ESP_LOGI(__func__, "Launch Comm sender task");
+        xTaskCreate(comm_sender_task, "C)omm sender Task", 4096, NULL, OTTO_COMM_SENDER_TASK_PRI, NULL);
     } else {
         ESP_LOGI(__func__, "Init communication with UART");
-        // UartWired uartWired(false);
+        ESP_ERROR_CHECK(uart_init(UART_NUM_0));
+        
+        // COMM Sender task
+        ESP_LOGI(__func__, "Launch Comm sender task");
+        xTaskCreate(comm_sender_task, "Comm sender Task", 4096, NULL, OTTO_COMM_SENDER_TASK_PRI, NULL);
+
+        // COMM Receiver task
+        ESP_LOGI(__func__, "Launch Comm receiver task");
+        xTaskCreate(comm_receiver_task, "Comm receiver Task", 4096, NULL, OTTO_COMM_RECEIVER_TASK_PRI, NULL);
     }
     
-    // COMM Sender task
-    // ESP_LOGI(__func__, "Launch Comm sender task");
-    // xTaskCreate(comm_sender_task, "Comm sender Task", 4096, NULL, OTTO_COMM_SENDER_TASK_PRI, NULL);
-
-    // COMM Receiver task
-    // ESP_LOGI(__func__, "Launch Comm receiver task");
-    // xTaskCreate(comm_receiver_task, "Comm receiver Task", 4096, NULL, OTTO_COMM_RECEIVER_TASK_PRI, NULL);
-
     // Clean up init task
     vTaskDelete(NULL);
 }
@@ -210,77 +213,89 @@ void imu_task(void *param) {
  * 
  * @param param 
  */
-// void comm_receiver_task(void *param) {
+void comm_receiver_task(void *param) {
 
-//     ESP_LOGI(__func__, "Comm receiver Task begins");
-//     Command_Data_Packet_UART commandDataPacket;
-//     Command_Data commandData;
+    ESP_LOGI(__func__, "Comm receiver Task begins");
+    Command_Data_Packet_UART commandDataPacket;
+    Command_Data commandData;
 
-//     // Flush current fifo before processing
-//     ESP_ERROR_CHECK(uart_flush(UART_NUM_0));
-//     while (1) {
-//         uint8_t headerByte;
+    UartWired uartWired(false);
 
-//         // Sync header bytes
-//         while (1) {
-//             int length = 0;
-//             ESP_ERROR_CHECK(uart_get_buffered_data_len(UART_NUM_0, (size_t*)&length));
-//             ESP_LOGI(__func__, "Buffer size: %d", length);
-//             uartWired.receiveData(&headerByte, sizeof(headerByte), portMAX_DELAY);
-//             if (headerByte == HEADER_BYTE1) {
-//                 uartWired.receiveData(&headerByte, sizeof(headerByte), portMAX_DELAY);
-//                 if (headerByte == HEADER_BYTE2) {
-//                     uartWired.receiveData(&headerByte, sizeof(headerByte), portMAX_DELAY);
-//                     if (headerByte == HEADER_BYTE3) {
-//                         uartWired.receiveData(&headerByte, sizeof(headerByte), portMAX_DELAY);
-//                         if (headerByte == HEADER_BYTE4) {
-//                             headerByte = 0;
-//                             break;
-//                         }
-//                     }
-//                 }
-//             }  
-//         }
+    // Flush current fifo before processing
+    ESP_ERROR_CHECK(uart_flush(UART_NUM_0));
 
-//         int readBytes = uartWired.receiveData(&commandData, sizeof(commandData), portMAX_DELAY);
-//         if (readBytes == sizeof(commandData)) {
-//             // todo: add checking for header, CRC, ... to check the correctness of the packet
-//             // commandData = commandDataPacket.commandData;
-//             ESP_LOGI(__func__, "Comm receiver Task: received one packet: omega_left: %.2f", commandData.leftAngularVelo);
-//             if (xQueueSendToBack( dataInQueue, &commandData, ( TickType_t ) 0 ) != pdPASS ) {
-//                 ESP_LOGI(__func__, "Comm receiver Task: queue full");
-//             }
-//         }
-//     }
+    while (1) {
+        uint8_t headerByte;
 
-//     ESP_LOGE(__func__, "COMM receiver Task quit unexpectedly");
-//     vTaskDelete(NULL);
-// }
+        // Sync header bytes
+        while (1) {
+            int length = 0;
+            ESP_ERROR_CHECK(uart_get_buffered_data_len(UART_NUM_0, (size_t*)&length));
+            ESP_LOGI(__func__, "Buffer size: %d", length);
+            uartWired.receiveData(&headerByte, sizeof(headerByte), portMAX_DELAY);
+            if (headerByte == HEADER_BYTE1) {
+                uartWired.receiveData(&headerByte, sizeof(headerByte), portMAX_DELAY);
+                if (headerByte == HEADER_BYTE2) {
+                    uartWired.receiveData(&headerByte, sizeof(headerByte), portMAX_DELAY);
+                    if (headerByte == HEADER_BYTE3) {
+                        uartWired.receiveData(&headerByte, sizeof(headerByte), portMAX_DELAY);
+                        if (headerByte == HEADER_BYTE4) {
+                            headerByte = 0;
+                            break;
+                        }
+                    }
+                }
+            }  
+        }
+
+        int readBytes = uartWired.receiveData(&commandData, sizeof(commandData), portMAX_DELAY);
+        if (readBytes == sizeof(commandData)) {
+            // todo: add checking for header, CRC, ... to check the correctness of the packet
+            // commandData = commandDataPacket.commandData;
+            ESP_LOGI(__func__, "Comm receiver Task: received one packet: omega_left: %.2f", commandData.leftAngularVelo);
+            if (xQueueSendToBack( dataInQueue, &commandData, ( TickType_t ) 0 ) != pdPASS ) {
+                ESP_LOGI(__func__, "Comm receiver Task: queue full");
+            }
+        }
+    }
+
+    ESP_LOGE(__func__, "COMM receiver Task quit unexpectedly");
+    vTaskDelete(NULL);
+}
 
 /**
  * @brief Init communication sender
  * 
  * @param param 
  */
-// void comm_sender_task(void *param) {
+void comm_sender_task(void *param) {
     
-//     ESP_LOGI(__func__, "Comm sender Task begins");
-//     Feedback_Data feedbackData;
-//     Feedback_Data_Packet_UART feedbackDataPacket;
+    ESP_LOGI(__func__, "Comm sender Task begins");
+    Feedback_Data feedbackData;
+    Feedback_Data_Packet_UART feedbackDataPacket;
 
-//     while (1) {
-//         if( xQueueReceive( dataOutQueue, &feedbackData, portMAX_DELAY ) == pdTRUE) {
-//             feedbackDataPacket.CRC = 0; // TODO: 
-//             feedbackDataPacket.header = HEADER;
-//             feedbackDataPacket.feedBackData = feedbackData;
-//             feedbackDataPacket.timestamp = 0; // TODO: 
-//             uartWired.sendData(&feedbackDataPacket, sizeof(Feedback_Data_Packet_UART));
-//         }
-//     }
+    UartWired uartWired(false);
+    EspNowWireless espNowWireless(false);
 
-//     ESP_LOGE(__func__, "COMM sender Task quit unexpectedly");
-//     vTaskDelete(NULL);
-// }
+    while (1) {
+        if( xQueueReceive( dataOutQueue, &feedbackData, portMAX_DELAY ) == pdTRUE) {
+            feedbackDataPacket.CRC = 0; // TODO: 
+            feedbackDataPacket.header = HEADER;
+            feedbackDataPacket.feedBackData = feedbackData;
+            feedbackDataPacket.timestamp = 0; // TODO: 
+
+            if (ESP_NOW_MODE) {
+                espNowWireless.sendData(&feedbackDataPacket, sizeof(Feedback_Data_Packet_UART));
+            } else {
+                uartWired.sendData(&feedbackDataPacket, sizeof(Feedback_Data_Packet_UART));
+            }
+            
+        }
+    }
+
+    ESP_LOGE(__func__, "COMM sender Task quit unexpectedly");
+    vTaskDelete(NULL);
+}
 
 /**
  * @brief Init lcd 

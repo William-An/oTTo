@@ -22,14 +22,12 @@
 class EspNowWireless : public CommunicationIF {
     public:
 
-        EspNowWireless(bool debugMode, QueueHandle_t dataInQueue, QueueHandle_t dataOutQueue);
+        EspNowWireless(bool debugMode);
         ~EspNowWireless(){};
 
         int sendData(const void* data, size_t size);
-        int receiveData(void *buf, uint32_t length, TickType_t ticks_to_wait);
+        // int receiveData(void *buf, uint32_t length, TickType_t ticks_to_wait);
         uint32_t calculateCRC();
 
 };
-
-esp_err_t otto_get_macAddr();
 #endif

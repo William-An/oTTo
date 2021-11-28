@@ -1,6 +1,3 @@
-static const int RX_BUF_SIZE = 1024;
-static const int TX_BUF_SIZE = 0;
-
 const uint32_t HEADER = 0x92384233;
 const uint8_t HEADER_BYTE1 = 0x33;
 const uint8_t HEADER_BYTE2 = 0x42;
