@@ -520,7 +520,7 @@ void display_task(void *param) {
                 if (left){
                     n_state = MAC;
                 }
-
+                
                 break;
             case ETH:
                 lcd.clear();
@@ -537,6 +537,7 @@ void display_task(void *param) {
                 if (left){
                     n_state = MAC;
                 }
+                
             case BLU:
                 lcd.clear();
                 lcd.move_cursor(0,0);
