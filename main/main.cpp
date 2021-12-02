@@ -316,8 +316,9 @@ void comm_sender_task(void *param) {
     }
 
     ESP_LOGE(__func__, "COMM sender Task quit unexpectedly");
-    vTaskDelete(NULL);
+    //vTaskDelete(NULL);
 }
+
 
 /**
  * @brief Init lcd 
@@ -334,8 +335,6 @@ void display_task(void *param) {
     MenuState n_state = ROOT;
 
     while(1) {
-        const char *primMenu[3] = {"Command Data", "Feedback Data", "Connection"};
-        const char *CMDdata[2] ={">Angular Velocity", ">Rotated Angle"};
         lcd.readReg(0b0100111, MCP23008_REG_GPIO, &sw_var, 1);
         //printf("sw var%d \n",~sw_var);
         uint8_t down = ~sw_var & 0b00001;      //gp 0
