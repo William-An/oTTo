@@ -508,8 +508,39 @@ void display_task(void *param) {
                     n_state = WIFI;
                 }
                 break;
-            // case WIFI:
-            // case ETH:
+            case WIFI:
+                lcd.clear();
+                lcd.move_cursor(0,0);
+                lcd.write_string("WIFI: "); 
+                lcd.move_cursor(1,0);
+                lcd.write_string("0c:dc:7e:89:32:5c");
+                if (down){
+                    n_state = ETH;
+                }  
+                if (up){
+                    n_state = BLU;
+                }
+                if (left){
+                    n_state = MAC;
+                }
+                
+                break;
+            case ETH:
+                lcd.clear();
+                lcd.move_cursor(0,0);
+                lcd.write_string("ETHERNET: "); 
+                lcd.move_cursor(1,0);
+                lcd.write_string("0c:dc:7e:89:32:5c");
+                if (down){
+                    n_state = BLU;
+                }  
+                if (up){
+                    n_state = ETH;
+                }
+                if (left){
+                    n_state = MAC;
+                }
+                
             // case BLU:
         }
        
@@ -553,6 +584,56 @@ void display_task(void *param) {
                 break;
         }
 
+
+        if( xQueuePeek( dataInQueue, (void*) &( feedbackData ), pdMS_TO_TICKS( 100 ) ) ) {
+            // ESP_LOGE(__func__, "received. %f", commandData);
+            // todo: display the received data
+            char lvl[30];
+            char rvl[30];
+            char lal[30];
+            char ral[30];
+            sprintf(yall,"%.2f",feedbackData.YALL);
+            sprintf(pitch,"%.2f",feedbackData.PITCH);
+            sprintf(roll,"%.2f",feedbackData.ROLL);
+           
+            //ESP_LOGD(__func__, "%.2f",commandData.leftAngularVelo);
+           // lcd.clear();
+            // lcd.write_string(str);
+            //lcd.write_string(lvl);
+
+        switch (n_state){
+            case YALLD:
+                lcd.clear();
+                lcd.move_cursor(0,0);
+                lcd.write_string("YALL"); 
+                lcd.move_cursor(1,0);
+                lcd.write_string(yall); 
+                if (left){
+                    n_state = YALL;
+                }
+                break;
+            case PITCHD:
+                lcd.clear();
+                lcd.move_cursor(0,0);
+                lcd.write_string("PITCH"); 
+                lcd.move_cursor(1,0);
+                lcd.write_string(pitch); 
+                if (left){
+                    n_state = PITCH;
+                }
+                break;
+            case ROLLD:
+                lcd.clear();
+                lcd.move_cursor(0,0);
+                lcd.write_string("roll"); 
+                lcd.move_cursor(1,0);
+                lcd.write_string(roll); 
+                if (left){
+                    n_state = ROLL;
+                }
+            break;
+            
+        }
 
        
 
