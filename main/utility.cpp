@@ -157,9 +157,9 @@ void receiveDataCB(const uint8_t *mac_addr, const uint8_t *data, int data_len) {
     // todo: Need to also check timestamp and CRC
     Feedback_Data feedBackData = packet -> feedBackData;
 
-    ESP_LOGI(__func__, "Comm receiver Task: received one packet: omega_left: %.2f", feedBackData.leftAngularVelo);
+    ESP_LOGI(__func__, "ESP-NOW: received one packet: omega_left: %.2f", feedBackData.leftAngularVelo);
     if (xQueueSendToBack( _dataInQueue, &feedBackData, ( TickType_t ) 0 ) != pdPASS ) {
-        ESP_LOGI(__func__, "Comm receiver Task: queue full");
+        ESP_LOGI(__func__, "ESP-NOW: queue full");
     }
 }
 

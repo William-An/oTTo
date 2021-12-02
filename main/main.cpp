@@ -116,8 +116,8 @@ void otto_init(void *param) {
     ESP_ERROR_CHECK(get_macAddr());
     
     // COMM Sender task
-    // ESP_LOGI(__func__, "Launch Comm sender task");
-    // xTaskCreate(comm_sender_task, "Comm sender Task", 4096, NULL, OTTO_COMM_SENDER_TASK_PRI, NULL);
+    ESP_LOGI(__func__, "Launch Comm sender task");
+    xTaskCreate(comm_sender_task, "Comm sender Task", 4096, NULL, OTTO_COMM_SENDER_TASK_PRI, NULL);
 
     // COMM Receiver task
     ESP_LOGI(__func__, "Launch Comm receiver task");
@@ -177,12 +177,12 @@ void comm_receiver_task(void *param) {
             }  
         }
         // TODO Weili: MATLAB does not pad the struct, thus right now just hard-code the value in
-        int readBytes = uartWired.receiveData(&commandDataPacketEspNow, 28, portMAX_DELAY);
-        if (readBytes == 28) {
+        int readBytes = uartWired.receiveData(&commandDataPacketEspNow, sizeof(commandDataPacketEspNow), portMAX_DELAY);
+        if (readBytes == sizeof(commandDataPacketEspNow)) {
             // todo: add checking for header, CRC, ... to check the correctness of the packet
             // commandData = commandDataPacket.commandData;
             ESP_LOGI(__func__, "Comm receiver Task: received one packet: omega_left: %.2f", commandDataPacketEspNow.commandData.leftAngularVelo);
-            espNowWireless.sendData(&commandDataPacketEspNow, 28);
+            espNowWireless.sendData(&commandDataPacketEspNow, sizeof(commandDataPacketEspNow));
         }
     }
 
@@ -209,6 +209,7 @@ void comm_sender_task(void *param) {
             feedbackDataPacket.feedBackData = feedbackData;
             feedbackDataPacket.timestamp = 0; // TODO: 
             uartWired.sendData(&feedbackDataPacket, sizeof(Feedback_Data_Packet_UART));
+            ESP_LOGI(__func__, "Sending data from ESP-NOW to UART");
         }
     }
 
