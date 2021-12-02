@@ -535,13 +535,28 @@ void display_task(void *param) {
                     n_state = BLU;
                 }  
                 if (up){
-                    n_state = ETH;
+                    n_state = WIFI;
                 }
                 if (left){
                     n_state = MAC;
                 }
                 
-            // case BLU:
+            case BLU:
+                lcd.clear();
+                lcd.move_cursor(0,0);
+                lcd.write_string("BLU "); 
+                lcd.move_cursor(1,0);
+                lcd.write_string("0c:dc:7e:89:32:5c");
+                if (down){
+                    n_state = WIFI;
+                }  
+                if (up){
+                    n_state = ETH;
+                }
+                if (left){
+                    n_state = MAC;
+                }
+
         }
        
 
