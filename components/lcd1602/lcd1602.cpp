@@ -109,6 +109,8 @@ LCD1602::LCD1602(uint8_t addr, uint8_t addr2) {
 esp_err_t LCD1602::begin(i2c_port_t portNum) {
     esp_err_t err = ESP_OK;
     this->i2c_portNum = portNum;
+    err = reset();
+    ESP_ERROR_CHECK(err);
 
     // Set MCP GPIO to output mode, default is 0xFF
     err = writeReg(lcd_addr,MCP23008_REG_IODIR, 0);
@@ -122,7 +124,7 @@ esp_err_t LCD1602::begin(i2c_port_t portNum) {
     if (err != ESP_OK)
         return err;
 
-    ESP_LOGI("Begin", "Set all to 0s");
+    ESP_LOGI(__func__, "Set all to 0s");
 
     // Set default inputs to all 0s
     err = writeReg(switch_addr,MCP23008_REG_GPIO, 0x2);
@@ -138,11 +140,11 @@ esp_err_t LCD1602::begin(i2c_port_t portNum) {
     err = enable_cursor(0);
     err = enable_blink(0);
 
-    ESP_LOGI("Begin", "Done");
-    vTaskDelay(300000 / portTICK_RATE_MS);
+    ESP_LOGI(__func__, "Done");
+    // vTaskDelay(300000 / portTICK_RATE_MS);
 
     // Reset device
-    ESP_LOGI("Begin", "Reseting chip");
+    ESP_LOGI(__func__, "Reseting chip");
     return reset();
 }
 

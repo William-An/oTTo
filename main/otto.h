@@ -54,7 +54,7 @@
 #define OTTO_DATA_IN_QUEUE_LEN  10
 #define OTTO_DATA_OUT_QUEUE_LEN  20
 
-#define ESP_NOW_MODE 1
+#define ESP_NOW_MODE 0
 
 // Peripheral control
 esp_err_t i2c_init(uint8_t i2c_portNum);
