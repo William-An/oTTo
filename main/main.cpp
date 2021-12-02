@@ -218,7 +218,6 @@ void comm_receiver_task(void *param) {
     ESP_LOGI(__func__, "Comm receiver Task begins");
     Command_Data_Packet_UART commandDataPacket;
     Command_Data commandData;
-    commandData.leftAngularVelo = 0;
 
     UartWired uartWired(false);
 
@@ -229,28 +228,28 @@ void comm_receiver_task(void *param) {
         uint8_t headerByte;
 
         // Sync header bytes
-        // while (1) {
-        //     int length = 0;
-        //     ESP_ERROR_CHECK(uart_get_buffered_data_len(UART_NUM_0, (size_t*)&length));
-        //     ESP_LOGI(__func__, "Buffer size: %d", length);
-        //     uartWired.receiveData(&headerByte, sizeof(headerByte), portMAX_DELAY);
-        //     if (headerByte == HEADER_BYTE1) {
-        //         uartWired.receiveData(&headerByte, sizeof(headerByte), portMAX_DELAY);
-        //         if (headerByte == HEADER_BYTE2) {
-        //             uartWired.receiveData(&headerByte, sizeof(headerByte), portMAX_DELAY);
-        //             if (headerByte == HEADER_BYTE3) {
-        //                 uartWired.receiveData(&headerByte, sizeof(headerByte), portMAX_DELAY);
-        //                 if (headerByte == HEADER_BYTE4) {
-        //                     headerByte = 0;
-        //                     break;
-        //                 }
-        //             }
-        //         }
-        //     }  
-        // }
+        while (1) {
+            int length = 0;
+            ESP_ERROR_CHECK(uart_get_buffered_data_len(UART_NUM_0, (size_t*)&length));
+            ESP_LOGI(__func__, "Buffer size: %d", length);
+            uartWired.receiveData(&headerByte, sizeof(headerByte), portMAX_DELAY);
+            if (headerByte == HEADER_BYTE1) {
+                uartWired.receiveData(&headerByte, sizeof(headerByte), portMAX_DELAY);
+                if (headerByte == HEADER_BYTE2) {
+                    uartWired.receiveData(&headerByte, sizeof(headerByte), portMAX_DELAY);
+                    if (headerByte == HEADER_BYTE3) {
+                        uartWired.receiveData(&headerByte, sizeof(headerByte), portMAX_DELAY);
+                        if (headerByte == HEADER_BYTE4) {
+                            headerByte = 0;
+                            break;
+                        }
+                    }
+                }
+            }  
+        }
 
-        // int readBytes = uartWired.receiveData(&commandData, sizeof(commandData), portMAX_DELAY);
-        // if (readBytes == sizeof(commandData)) {
+        int readBytes = uartWired.receiveData(&commandData, sizeof(commandData), portMAX_DELAY);
+        if (readBytes == sizeof(commandData)) {
             // todo: add checking for header, CRC, ... to check the correctness of the packet
             // commandData = commandDataPacket.commandData;
             ESP_LOGI(__func__, "UART: received one packet: omega_left: %.2f", commandData.leftAngularVelo);
@@ -270,8 +269,6 @@ void comm_receiver_task(void *param) {
                 ESP_LOGI(__func__, "Comm receiver Task: queue full");
             }
         }
-        commandData.leftAngularVelo = 0;
-        vTaskDelay(3000 / portTICK_RATE_MS);
     }
 
     ESP_LOGE(__func__, "COMM receiver Task quit unexpectedly");
@@ -316,7 +313,7 @@ void comm_sender_task(void *param) {
     }
 
     ESP_LOGE(__func__, "COMM sender Task quit unexpectedly");
-    //vTaskDelete(NULL);
+    vTaskDelete(NULL);
 }
 
 
@@ -508,9 +505,53 @@ void display_task(void *param) {
                     n_state = WIFI;
                 }
                 break;
-            // case WIFI:
-            // case ETH:
-            // case BLU:
+            case WIFI:
+                lcd.clear();
+                lcd.move_cursor(0,0);
+                lcd.write_string("WIFI: "); 
+                lcd.move_cursor(1,0);
+                lcd.write_string("0c:dc:7e:89:32:5c");
+                if (down){
+                    n_state = ETH;
+                }  
+                if (up){
+                    n_state = BLU;
+                }
+                if (left){
+                    n_state = MAC;
+                }
+
+                break;
+            case ETH:
+                lcd.clear();
+                lcd.move_cursor(0,0);
+                lcd.write_string("ETHERNET: "); 
+                lcd.move_cursor(1,0);
+                lcd.write_string("0c:dc:7e:89:32:5c");
+                if (down){
+                    n_state = BLU;
+                }  
+                if (up){
+                    n_state = WIFI;
+                }
+                if (left){
+                    n_state = MAC;
+                }
+            case BLU:
+                lcd.clear();
+                lcd.move_cursor(0,0);
+                lcd.write_string("BLU "); 
+                lcd.move_cursor(1,0);
+                lcd.write_string("0c:dc:7e:89:32:5c");
+                if (down){
+                    n_state = WIFI;
+                }  
+                if (up){
+                    n_state = ETH;
+                }
+                if (left){
+                    n_state = MAC;
+                }
         }
        
 
@@ -553,7 +594,55 @@ void display_task(void *param) {
                 break;
         }
 
+        if( xQueuePeek( dataInQueue, (void*) &( feedbackData ), pdMS_TO_TICKS( 100 ) ) ) {
+            // ESP_LOGE(__func__, "received. %f", commandData);
+            // todo: display the received data
+            char lvl[30];
+            char rvl[30];
+            char lal[30];
+            char ral[30];
+            sprintf(yall,"%.2f",feedbackData.YALL);
+            sprintf(pitch,"%.2f",feedbackData.PITCH);
+            sprintf(roll,"%.2f",feedbackData.ROLL);
 
+            //ESP_LOGD(__func__, "%.2f",commandData.leftAngularVelo);
+           // lcd.clear();
+            // lcd.write_string(str);
+            //lcd.write_string(lvl);
+
+        switch (n_state){
+            case YALLD:
+                lcd.clear();
+                lcd.move_cursor(0,0);
+                lcd.write_string("YALL"); 
+                lcd.move_cursor(1,0);
+                lcd.write_string(yall); 
+                if (left){
+                    n_state = YALL;
+                }
+                break;
+            case PITCHD:
+                lcd.clear();
+                lcd.move_cursor(0,0);
+                lcd.write_string("PITCH"); 
+                lcd.move_cursor(1,0);
+                lcd.write_string(pitch); 
+                if (left){
+                    n_state = PITCH;
+                }
+                break;
+            case ROLLD:
+                lcd.clear();
+                lcd.move_cursor(0,0);
+                lcd.write_string("roll"); 
+                lcd.move_cursor(1,0);
+                lcd.write_string(roll); 
+                if (left){
+                    n_state = ROLL;
+                }
+            break;
+
+        }
        
 
         
