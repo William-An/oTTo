@@ -324,11 +324,11 @@ void comm_sender_task(void *param) {
  */
 void display_task(void *param) {
     Command_Data commandData;
+    Feedback_Data feedbackData;
     LCD1602 lcd(0b0100000, 0b0100111);
     ESP_ERROR_CHECK(lcd.begin(OTTO_I2C_PORT_NUM));
     uint8_t sw_var;
-    int page = 0;
-    int i = 0;
+ 
     MenuState n_state = ROOT;
 
     while(1) {
@@ -553,6 +553,7 @@ void display_task(void *param) {
                 if (left){
                     n_state = MAC;
                 }
+            default: break;
         }
        
 
@@ -593,18 +594,19 @@ void display_task(void *param) {
                     n_state = VELO;
                 }
                 break;
+                default: break;
         }
 
-        if( xQueuePeek( dataInQueue, (void*) &( feedbackData ), pdMS_TO_TICKS( 100 ) ) ) {
+        if( xQueuePeek( dataOutQueue, (void*) &( feedbackData ), pdMS_TO_TICKS( 100 ) ) ) {
             // ESP_LOGE(__func__, "received. %f", commandData);
             // todo: display the received data
-            char lvl[30];
-            char rvl[30];
-            char lal[30];
-            char ral[30];
-            sprintf(yall,"%.2f",feedbackData.YALL);
-            sprintf(pitch,"%.2f",feedbackData.PITCH);
-            sprintf(roll,"%.2f",feedbackData.ROLL);
+            char yall[30];
+            char pitch[30];
+            char roll[30];
+        
+            sprintf(yall,"%.2f",feedbackData.yaw);
+            sprintf(pitch,"%.2f",feedbackData.pitch);
+            sprintf(roll,"%.2f",feedbackData.roll);
 
             //ESP_LOGD(__func__, "%.2f",commandData.leftAngularVelo);
            // lcd.clear();
@@ -642,6 +644,7 @@ void display_task(void *param) {
                     n_state = ROLL;
                 }
             break;
+            default: break;
 
         }
        
@@ -651,7 +654,7 @@ void display_task(void *param) {
         }
     }
 }
-
+}
 /**
  * @brief Motor task
  * 
