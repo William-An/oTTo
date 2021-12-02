@@ -169,12 +169,25 @@ void receiveDataCB(const uint8_t *mac_addr, const uint8_t *data, int data_len) {
         // todo: Need to also check timestamp and CRC
         Command_Data commandData = packet -> commandData;
 
-        ESP_LOGI(__func__, "Comm receiver Task: received one packet: omega_left: %.2f", commandData.leftAngularVelo);
+        // For testing purpose: here we send data to dataOutQueue
+        // Feedback_Data feedbackData;
+        // feedbackData.leftAngularVelo = commandData.leftAngularVelo;
+        // feedbackData.rightAngularVelo = commandData.rightAngularVelo;
+        // feedbackData.angleRotatedLeftMotor = commandData.angleRotatedLeftMotor;
+        // feedbackData.angleRotatedRightMotor = commandData.angleRotatedRightMotor;
+        // feedbackData.yaw = 1;
+        // feedbackData.pitch = 2;
+        // feedbackData.roll = 3;
+
+        // ESP_LOGI(__func__, "received one packet: leftAngularVelo: %.2f", commandData.leftAngularVelo);
+        // ESP_LOGI(__func__, "received one packet: rightAngularVelo: %.2f", commandData.rightAngularVelo);
+        // ESP_LOGI(__func__, "received one packet: angleRotatedLeftMotor: %.2f", commandData.angleRotatedLeftMotor);
+        // ESP_LOGI(__func__, "received one packet: angleRotatedRightMotor: %.2f", commandData.angleRotatedRightMotor);
         if (xQueueSendToBack( _dataInQueue, &commandData, ( TickType_t ) 0 ) != pdPASS ) {
-            ESP_LOGI(__func__, "Comm receiver Task: queue full");
+            // ESP_LOGI(__func__, "Comm receiver Task: queue full");
         }
     } else {
-        ESP_LOGI(__func__, "ELSE! Comm receiver Task: received one packet");
+        // ESP_LOGI(__func__, "ELSE! Comm receiver Task: received one packet. The size is %d", data_len);
     }
 }
 

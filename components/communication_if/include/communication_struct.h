@@ -17,13 +17,13 @@ typedef struct Command_Data {
 typedef struct Command_Data_Packet_UART {
     uint32_t header;
     Command_Data commandData;
-    uint64_t timestamp;
+    uint32_t timestamp;
     uint32_t CRC;
 } Command_Data_Packet_UART;
 
 typedef struct Command_Data_Packet_ESP_NOW {
     Command_Data commandData;
-    uint64_t timestamp;
+    uint32_t timestamp;
     uint32_t CRC;
 } Command_Data_Packet_ESP_NOW;
 
@@ -42,12 +42,12 @@ typedef struct Feedback_Data {
 typedef struct Feedback_Data_Packet_UART {
     uint32_t header;
     Feedback_Data feedBackData;
-    uint64_t timestamp;
+    uint32_t timestamp;
     uint32_t CRC;
 } Feedback_Data_Packet_UART;
 
 typedef struct Feedback_Data_Packet_ESP_NOW {
     Feedback_Data feedBackData;
-    uint64_t timestamp;
+    uint32_t timestamp;
     uint32_t CRC;
 } Feedback_Data_Packet_ESP_NOW;

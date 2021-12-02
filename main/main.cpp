@@ -116,8 +116,8 @@ void otto_init(void *param) {
     // IMU task
     // Pin IMU task to APP_CPU per ESP32 Guidelines: 
     //  https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/freertos-smp.html#floating-points
-    // ESP_LOGI(__func__, "Launch IMU task");
-    // xTaskCreatePinnedToCore(imu_task, "IMU Task", 8192, NULL, OTTO_IMU_TASK_PRI, NULL, APP_CPU_NUM);
+    ESP_LOGI(__func__, "Launch IMU task");
+    xTaskCreatePinnedToCore(imu_task, "IMU Task", 8192, NULL, OTTO_IMU_TASK_PRI, NULL, APP_CPU_NUM);
 
     // LCD task
     ESP_LOGI(__func__, "Launch LCD task");
@@ -253,9 +253,22 @@ void comm_receiver_task(void *param) {
         // if (readBytes == sizeof(commandData)) {
             // todo: add checking for header, CRC, ... to check the correctness of the packet
             // commandData = commandDataPacket.commandData;
-        ESP_LOGI(__func__, "Comm receiver Task: received one packet: omega_left: %.2f", commandData.leftAngularVelo);
-        if (xQueueSendToBack( dataInQueue, &commandData, ( TickType_t ) 0 ) != pdPASS ) {
-            ESP_LOGI(__func__, "Comm receiver Task: queue full");
+            ESP_LOGI(__func__, "UART: received one packet: omega_left: %.2f", commandData.leftAngularVelo);
+            // if (xQueueSendToBack( dataInQueue, &commandData, ( TickType_t ) 0 ) != pdPASS ) {
+            //     ESP_LOGI(__func__, "Comm receiver Task: queue full");
+            // }
+            Feedback_Data feedbackData;
+            feedbackData.leftAngularVelo = commandData.leftAngularVelo;
+            feedbackData.rightAngularVelo = commandData.rightAngularVelo;
+            feedbackData.angleRotatedLeftMotor = commandData.angleRotatedLeftMotor;
+            feedbackData.angleRotatedRightMotor = commandData.angleRotatedRightMotor;
+            feedbackData.yaw = 1;
+            feedbackData.pitch = 2;
+            feedbackData.roll = 3;
+
+            if (xQueueSendToBack( dataOutQueue, &feedbackData, ( TickType_t ) 0 ) != pdPASS ) {
+                ESP_LOGI(__func__, "Comm receiver Task: queue full");
+            }
         }
         commandData.leftAngularVelo = 0;
         vTaskDelay(3000 / portTICK_RATE_MS);
@@ -274,22 +287,29 @@ void comm_sender_task(void *param) {
     
     ESP_LOGI(__func__, "Comm sender Task begins");
     Feedback_Data feedbackData;
-    Feedback_Data_Packet_UART feedbackDataPacket;
+    Feedback_Data_Packet_UART feedbackDataPacketUART;
+    Feedback_Data_Packet_ESP_NOW feedbackDataPacketESPNOW;
 
     UartWired uartWired(false);
     EspNowWireless espNowWireless(false);
 
     while (1) {
         if( xQueueReceive( dataOutQueue, &feedbackData, portMAX_DELAY ) == pdTRUE) {
-            feedbackDataPacket.CRC = 0; // TODO: 
-            feedbackDataPacket.header = HEADER;
-            feedbackDataPacket.feedBackData = feedbackData;
-            feedbackDataPacket.timestamp = 0; // TODO: 
 
             if (ESP_NOW_MODE) {
-                espNowWireless.sendData(&feedbackDataPacket, sizeof(Feedback_Data_Packet_UART));
+                feedbackDataPacketESPNOW.CRC = 0; // TODO: 
+                feedbackDataPacketESPNOW.feedBackData = feedbackData;
+                feedbackDataPacketESPNOW.timestamp = 0; // TODO: 
+                // ESP_LOGI(__func__, "About to send back data through ESP-NOW! yaw: %.2f", feedbackDataPacketESPNOW.feedBackData.yaw);
+                // ESP_LOGI(__func__, "About to send back data through ESP-NOW! yaw: %.2f", feedbackDataPacketESPNOW.feedBackData.pitch);
+                // ESP_LOGI(__func__, "About to send back data through ESP-NOW! yaw: %.2f", feedbackDataPacketESPNOW.feedBackData.roll);
+                espNowWireless.sendData(&feedbackDataPacketESPNOW, sizeof(Feedback_Data_Packet_ESP_NOW));
             } else {
-                uartWired.sendData(&feedbackDataPacket, sizeof(Feedback_Data_Packet_UART));
+                feedbackDataPacketUART.CRC = 0; // TODO: 
+                feedbackDataPacketUART.header = HEADER;
+                feedbackDataPacketUART.feedBackData = feedbackData;
+                feedbackDataPacketUART.timestamp = 0; // TODO: 
+                uartWired.sendData(&feedbackDataPacketUART, sizeof(Feedback_Data_Packet_UART));
             }
             
         }
@@ -587,4 +607,3 @@ void motor_task(void *param) {
         }
     }
 }
-
