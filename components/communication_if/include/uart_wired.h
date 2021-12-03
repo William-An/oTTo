@@ -28,8 +28,8 @@ class UartWired : public CommunicationIF {
         ~UartWired(){};
 
         // inherited interface
-        int sendData(const void* data, uint32_t size);
-        int receiveData(void* data, uint32_t size);
+        int sendData(const void* data, size_t size);
+        int receiveData(void *buf, uint32_t length, TickType_t ticks_to_wait);
         uint32_t calculateCRC();
 
 };
