@@ -2,6 +2,16 @@
 
 Purdue University ECE 47700 senior design project
 
+## Roadmap 2022
+
+1. [ ] Redesign PCBs to fix current issuues
+    1. [ ] Through-hole USB port
+    2. [ ] Type-C USB
+    3. [ ] Fix auto-program issue on main controller board
+    4. [ ] Fix Flash error on PC adapter
+    5. [ ] Solder IMU on controller board
+2. [ ] Better software libraries and documentation support 
+
 ## Intro
 
 oTTo is a two-wheel self-balancing robot designed as an experimental hardware platform for control theory students to gain hands-on experience on real-world control problems. In addition to the microcontroller part, a MATLAB/Simulink interface will be also provided to facilitate the implementation of various controllers with Simulink.
