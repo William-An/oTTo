@@ -357,7 +357,7 @@ void display_task(void *param) {
                 lcd.move_cursor(0,0);
                 lcd.write_string("oTTo Project"); 
                 lcd.move_cursor(1,0);
-                lcd.write_string("By WA, XD, YF, RZ"); 
+                lcd.write_string("By WA,XD,YF,RZ"); 
                 break;
             case CMD:
                 lcd.clear();
@@ -537,6 +537,7 @@ void display_task(void *param) {
                 if (left){
                     n_state = MAC;
                 }
+                break;
                 
             case BLU:
                 lcd.clear();
@@ -553,6 +554,7 @@ void display_task(void *param) {
                 if (left){
                     n_state = MAC;
                 }
+                break;
             default: break;
         }
        
@@ -596,6 +598,31 @@ void display_task(void *param) {
                 break;
                 default: break;
         }
+    }
+        else{
+            switch (n_state){
+            case ANGD:
+                lcd.clear();
+                lcd.move_cursor(0,0);
+                lcd.write_string("Left: not available"); 
+                lcd.move_cursor(1,0);
+                lcd.write_string("Right: not available"); 
+                if (left){
+                    n_state = ANG;
+                }
+                break;
+            case VELOD:
+                lcd.clear();
+                lcd.move_cursor(0,0);
+                lcd.write_string("Left: not available"); 
+                lcd.move_cursor(1,0);
+                lcd.write_string("Right: not available"); 
+                if (left){
+                    n_state = VELO;
+                }
+                break;
+                default: break;
+        }
 
         if( xQueuePeek( dataOutQueue, (void*) &( feedbackData ), pdMS_TO_TICKS( 100 ) ) ) {
             // ESP_LOGE(__func__, "received. %f", commandData);
@@ -607,6 +634,9 @@ void display_task(void *param) {
             sprintf(yall,"%.2f",feedbackData.yaw);
             sprintf(pitch,"%.2f",feedbackData.pitch);
             sprintf(roll,"%.2f",feedbackData.roll);
+            ESP_LOGI(__func__, "%.2f",feedbackData.yaw);
+            ESP_LOGI(__func__, "%.2f",feedbackData.pitch);
+            ESP_LOGI(__func__, "%.2f",feedbackData.roll);
 
             //ESP_LOGD(__func__, "%.2f",commandData.leftAngularVelo);
            // lcd.clear();
@@ -646,6 +676,40 @@ void display_task(void *param) {
             break;
             default: break;
 
+        } 
+        }else {
+                    switch (n_state){
+            case YALLD:
+                lcd.clear();
+                lcd.move_cursor(0,0);
+                lcd.write_string("YALL"); 
+                lcd.move_cursor(1,0);
+                lcd.write_string("not available"); 
+                if (left){
+                    n_state = YALL;
+                }
+                break;
+            case PITCHD:
+                lcd.clear();
+                lcd.move_cursor(0,0);
+                lcd.write_string("PITCH"); 
+                lcd.move_cursor(1,0);
+                lcd.write_string("not available"); 
+                if (left){
+                    n_state = PITCH;
+                }
+                break;
+            case ROLLD:
+                lcd.clear();
+                lcd.move_cursor(0,0);
+                lcd.write_string("roll"); 
+                lcd.move_cursor(1,0);
+                lcd.write_string("not available"); 
+                if (left){
+                    n_state = ROLL;
+                }
+            break;
+            default: break;
         }
        
 
